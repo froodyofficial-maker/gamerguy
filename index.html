@@ -1,99 +1,42 @@
 <!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GamerGuy — Find Your Horror Game</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
-</head>
-<body>
-<div class="noise"></div>
-<header class="nav">
-  <a class="brand" href="#"><span class="brand-mark">G</span><span>Gamer<span>Guy</span></span></a>
-  <nav><a href="#discover">Discover</a><a href="#games">Games</a><a href="#how">How it works</a></nav>
-  <button class="nav-search" id="knownSearch">⌕ Search a game</button>
-</header>
-
-<main>
-<section class="hero" id="discover">
-  <div class="hero-glow"></div>
-  <div class="hero-copy">
-    <div class="eyebrow">HORROR GAME DISCOVERY</div>
-    <h1>Find the horror<br><em>you actually want.</em></h1>
-    <p>Tell GamerGuy what scares you. We'll match your taste with horror games worth playing.</p>
-    <div class="hero-actions">
-      <button class="primary" id="findBtn">Find my game <span>→</span></button>
-      <button class="secondary" id="knownSearch2">I know a game</button>
-    </div>
-  </div>
-  <div class="hero-card">
-    <div class="mini-label">GAMERGUY MATCH</div>
-    <div class="match-ring"><strong>94</strong><span>%</span></div>
-    <h3>Alien: Isolation</h3>
-    <p>Heavy atmosphere · Survival · Psychological</p>
-    <div class="bar"><i style="width:94%"></i></div>
-    <small>Based on your preferences</small>
-  </div>
-</section>
-
-<section class="section" id="games">
-  <div class="section-head"><div><div class="eyebrow">EXPLORE</div><h2>Horror, your way.</h2></div><button class="text-btn" id="knownSearch3">Search all games →</button></div>
-  <div class="game-grid" id="featured"></div>
-</section>
-
-<section class="how" id="how">
-  <div class="eyebrow">HOW IT WORKS</div><h2>Less scrolling.<br>More screaming.</h2>
-  <div class="steps">
-    <div><b>01</b><h3>Pick your tags</h3><p>Choose what you want more — or less — of.</p></div>
-    <div><b>02</b><h3>Get matched</h3><p>GamerGuy scores games against your preferences.</p></div>
-    <div><b>03</b><h3>Play</h3><p>Explore the game, then jump to Steam when you're ready.</p></div>
-  </div>
-</section>
-</main>
-
-<div class="modal hidden" id="modal">
-  <div class="backdrop"></div>
-  <div class="dialog">
-    <button class="close" id="close">×</button>
-    <div class="eyebrow">GAMERGUY MATCHMAKER</div>
-    <h2 id="modalTitle">What are you looking for?</h2>
-    <p id="modalSub">Pick as many as you want. We'll do the rest.</p>
-    <div class="tag-grid" id="tagGrid"></div>
-    <div class="dialog-bottom"><span id="selectedCount">0 selected</span><button class="primary" id="matchBtn">Find my matches →</button></div>
-  </div>
-</div>
-
-<div class="modal hidden" id="searchModal">
-  <div class="backdrop"></div>
-  <div class="dialog search-dialog">
-    <button class="close" id="closeSearch">×</button>
-    <div class="eyebrow">GAME DATABASE</div><h2>Know what you're looking for?</h2>
-    <div class="searchbox"><span>⌕</span><input id="searchInput" placeholder="Search a game..." autofocus></div>
-    <div id="searchResults" class="search-results"></div>
-  </div>
-</div>
-
-<div class="modal hidden" id="resultsModal">
-  <div class="backdrop"></div>
-  <div class="dialog results-dialog">
-    <button class="close" id="closeResults">×</button>
-    <div class="eyebrow">YOUR RESULTS</div><h2>Games picked for you.</h2>
-    <p id="resultSummary"></p>
-    <div id="results" class="results"></div>
-  </div>
-</div>
-
-<div class="modal hidden" id="gameModal">
-  <div class="backdrop"></div>
-  <div class="dialog game-dialog">
-    <button class="close" id="closeGame">×</button>
-    <div id="gameDetail"></div>
-  </div>
-</div>
-
-<footer><span>© 2026 GamerGuy</span><span>Built for horror fans.</span></footer>
-<script src="app.js"></script>
-</body>
-</html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GamerGuy — Steam Game Discovery</title>
+<style>
+:root{--bg:#07090e;--p:#10141c;--p2:#151a24;--line:#272e3b;--txt:#f5f7fb;--muted:#8d97aa;--a:#7d5cff;--g:#48e0a0;--y:#ffd166;--r:#ff5d73;--rad:18px}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 75% -10%,#261c55 0,transparent 32%),radial-gradient(circle at -10% 30%,#0e3328 0,transparent 28%),var(--bg);color:var(--txt);font:14px Inter,system-ui,Segoe UI,Arial,sans-serif}button,input{font:inherit}button{cursor:pointer}a{text-decoration:none;color:inherit}.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}.side{position:sticky;top:0;height:100vh;padding:20px 15px;border-right:1px solid var(--line);background:#080b10d9;backdrop-filter:blur(18px)}.logo{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:900;padding:8px 10px 24px}.mark{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--a),#a58fff);display:grid;place-items:center;box-shadow:0 12px 32px #7d5cff44}.nav{display:grid;gap:7px}.nav button,.mobile button{border:0;background:transparent;color:var(--muted);padding:12px;border-radius:12px;text-align:left;transition:.2s}.nav button:hover,.nav button.on{background:#171c26;color:var(--txt);transform:translateX(2px)}.nav button.on{box-shadow:inset 3px 0 var(--a)}.ico{width:18px;height:18px;vertical-align:middle;margin-right:10px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.sidefoot{position:absolute;bottom:18px;left:15px;right:15px;padding:12px;border:1px solid var(--line);border-radius:13px;color:var(--muted);font-size:11px}.top{height:70px;position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;padding:0 26px;border-bottom:1px solid #272e3b99;background:#080b10c9;backdrop-filter:blur(18px)}.search{position:relative;flex:1;max-width:760px}.search input{width:100%;padding:13px 45px;border-radius:14px;border:1px solid var(--line);background:#111620;color:var(--txt);outline:0}.search input:focus{border-color:#5c4ba0;box-shadow:0 0 0 4px #7d5cff18}.search .ico{position:absolute;left:14px;top:12px;color:#778196}.kbd{position:absolute;right:10px;top:9px;border:1px solid var(--line);padding:3px 7px;border-radius:7px;color:#687286;font-size:11px}.topbtn{width:40px;height:40px;border:1px solid var(--line);border-radius:11px;background:#111620;color:var(--muted)}.main{min-width:0}.wrap{max-width:1500px;margin:auto;padding:28px 30px 70px}.hero{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:24px;padding:34px;min-height:310px;background:linear-gradient(120deg,#151a29,#0f1219 55%,#1a132c);box-shadow:0 24px 70px #0007}.hero:after{content:"";position:absolute;width:420px;height:420px;border-radius:50%;right:-140px;top:-160px;background:#7d5cff33;filter:blur(15px);animation:orb 8s ease-in-out infinite alternate}@keyframes orb{to{transform:translate(-40px,50px) scale(1.1)}}.hero>*{position:relative;z-index:1}.eyebrow{color:#b5a8ff;font-weight:800;font-size:11px;letter-spacing:1.6px;text-transform:uppercase}.hero h1{font-size:clamp(36px,5vw,62px);line-height:.98;letter-spacing:-3px;margin:15px 0}.hero p{max-width:650px;color:#aeb7c8;font-size:16px}.actions{display:flex;gap:9px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:#171c26;color:var(--txt);padding:10px 14px;border-radius:12px;font-weight:800;transition:.2s}.btn:hover{transform:translateY(-2px);border-color:#444c5b}.primary{background:linear-gradient(135deg,var(--a),#6546e8);border:0;box-shadow:0 10px 30px #7d5cff33}.green{color:#7df0bc;border-color:#285240;background:#10221b}.section{margin-top:32px}.head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:14px}.head h2{margin:0;font-size:21px}.head p{margin:4px 0 0;color:var(--muted)}.status{color:var(--muted);font-size:12px}.status i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#596174;margin-right:6px}.status.ok i{background:var(--g);box-shadow:0 0 12px #48e0a088}.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#10141b;color:#aeb7c7}.chip:hover,.chip.on{color:var(--txt);border-color:#5c4ba0;background:#17132b}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:14px}.card{overflow:hidden;background:linear-gradient(180deg,#111620,#0d1016);border:1px solid var(--line);border-radius:17px;transition:.25s}.card:hover{transform:translateY(-5px);border-color:#3b4453;box-shadow:0 20px 40px #0007}.cover{aspect-ratio:460/215;position:relative;background:#171b23;overflow:hidden}.cover img{width:100%;height:100%;object-fit:cover;display:block;transition:.4s}.card:hover img{transform:scale(1.04)}.rank,.save{position:absolute;top:9px;background:#05070bd9;border:1px solid #ffffff18}.rank{left:9px;padding:5px 8px;border-radius:8px;font-weight:900;font-size:11px}.save{right:9px;width:34px;height:34px;border-radius:10px;color:#dce2ed}.save.saved{color:var(--y)}.body{padding:13px}.title{font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;color:var(--muted);font-size:11px}.tag{border:1px solid #2a313e;padding:3px 7px;border-radius:6px}.tag.sale{color:#7ef0bd;border-color:#285240}.price{margin-top:10px;font-weight:900}.old{text-decoration:line-through;color:#626c7f;font-weight:500;margin-left:6px;font-size:11px}.cardactions{display:flex;gap:7px;margin-top:11px}.cardactions .btn{flex:1;padding:8px;font-size:12px}.empty{padding:28px;border:1px dashed #333b49;border-radius:16px;text-align:center;color:var(--muted)}.bar{display:flex;justify-content:space-between;align-items:center;margin:20px 0 13px;color:var(--muted)}.overlay{position:fixed;inset:0;z-index:50;background:#000b;backdrop-filter:blur(7px);opacity:0;pointer-events:none;transition:.2s}.overlay.open{opacity:1;pointer-events:auto}.drawer{position:absolute;right:0;top:0;width:min(720px,96vw);height:100%;overflow:auto;background:#0b0f15;border-left:1px solid var(--line);transform:translateX(100%);transition:.35s}.overlay.open .drawer{transform:none}.close{position:absolute;right:17px;top:17px;z-index:3}.detailhero{height:300px;position:relative;overflow:hidden}.detailhero img{width:100%;height:100%;object-fit:cover;filter:brightness(.55)}.detailhero:after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 25%,#0b0f15 94%)}.detail{position:relative;margin-top:-55px;padding:0 24px 30px;z-index:2}.detail h2{font-size:32px;letter-spacing:-1.3px;margin:0 0 4px}.muted{color:var(--muted)}.features{display:flex;flex-wrap:wrap;gap:7px;margin:16px 0}.feature{border:1px solid #2a323f;border-radius:9px;padding:7px 9px;font-size:12px;color:#bfc7d5}.feature.sale{color:#ffd66b;border-color:#5d4c23}.feature.good{color:#7df0bc;border-color:#285240}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}.stat{padding:12px;border:1px solid var(--line);border-radius:12px;background:#111620}.stat b{display:block}.stat small{color:var(--muted)}.modal{position:fixed;inset:0;z-index:70;display:grid;place-items:center;background:#000b;opacity:0;pointer-events:none;transition:.2s}.modal.open{opacity:1;pointer-events:auto}.box{width:min(600px,94vw);background:#0e1219;border:1px solid var(--line);border-radius:20px;padding:21px}.listrow{width:100%;display:flex;align-items:center;gap:10px;background:#111620;color:var(--txt);border:1px solid var(--line);border-radius:12px;padding:11px;margin-top:8px;text-align:left}.grow{flex:1;min-width:0}.toast{position:fixed;right:20px;bottom:20px;z-index:100;background:#131923;border:1px solid #303847;border-radius:12px;padding:12px 15px;opacity:0;transform:translateY(15px);transition:.2s}.toast.show{opacity:1;transform:none}.mobile{display:none}
+@media(max-width:850px){.app{grid-template-columns:1fr}.side{display:none}.mobile{display:flex;position:fixed;bottom:10px;left:10px;right:10px;z-index:30;justify-content:space-around;background:#10141deF;border:1px solid var(--line);border-radius:16px;backdrop-filter:blur(18px)}.top{padding:0 13px}.wrap{padding:20px 14px 90px}.hero{padding:26px}.hero h1{letter-spacing:-2px}.kbd{display:none}.grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}}
+</style></head><body>
+<div class="app"><aside class="side"><div class="logo"><div class="mark"><svg class="ico" viewBox="0 0 24 24"><path d="M7 14l-2 3a2.8 2.8 0 0 0 4.8 2.8l1.4-2h2.6l1.4 2A2.8 2.8 0 0 0 20 17l-2-3"/><path d="M7 14a5 5 0 0 1 10 0M8 10V7m-1.5 1.5h3M15.5 9.5h.01M18 8h.01"/></svg></div>GamerGuy</div><nav class="nav"><button class="on" data-page="home">⌂ Home</button><button data-page="discover">⌕ Discover</button><button data-page="lists">☷ My Lists</button><button data-page="wishlist">◇ Wishlist</button><button data-page="alerts">◉ Alerts</button></nav><div class="sidefoot"><span id="status">Connecting to Steam…</span><br><br>Recommendations use your GamerGuy browsing activity stored in this browser.</div></aside>
+<main class="main"><header class="top"><div class="search"><svg class="ico"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5 5"/></svg><input id="q" placeholder="Search every Steam game…"><span class="kbd">CTRL K</span></div><button class="topbtn" id="bell" title="Enable alerts">◉</button><button class="topbtn" id="my">☷</button></header><div class="wrap" id="view"></div></main></div><nav class="mobile"><button data-page="home">⌂</button><button data-page="discover">⌕</button><button data-page="lists">☷</button><button data-page="wishlist">◇</button></nav>
+<div class="overlay" id="overlay"><div class="drawer"><button class="topbtn close" id="x">×</button><div id="detail"></div></div></div><div class="modal" id="modal"><div class="box"><div style="display:flex;justify-content:space-between"><h2 style="margin:0">Save game</h2><button class="topbtn" id="mx">×</button></div><p class="muted">Choose a list or create one.</p><div id="choices"></div><button class="btn primary" style="margin-top:12px" id="new">Create new list</button></div></div><div class="toast" id="toast"></div>
+<script>
+const EDGE='https://hlcajwtmwgrfolaokmbn.supabase.co/functions/v1/super-processor',STORE='https://store.steampowered.com/api/appdetails';
+const S={page:'home',q:'',apps:[],map:new Map(),cursor:0,more:true,loading:false,details:new Map(),viewed:JSON.parse(localStorage.ggViewed||'[]'),wish:JSON.parse(localStorage.ggWish||'[]'),lists:JSON.parse(localStorage.ggLists||'{}'),watch:JSON.parse(localStorage.ggWatch||'{}'),genres:JSON.parse(localStorage.ggGenres||'{}')};
+const $=x=>document.querySelector(x),esc=x=>String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const save=()=>{localStorage.ggViewed=JSON.stringify(S.viewed.slice(-80));localStorage.ggWish=JSON.stringify(S.wish);localStorage.ggLists=JSON.stringify(S.lists);localStorage.ggWatch=JSON.stringify(S.watch);localStorage.ggGenres=JSON.stringify(S.genres)};
+function toast(t){let e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(window.tt);window.tt=setTimeout(()=>e.classList.remove('show'),2400)}
+function cover(id){return `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${id}/header.jpg`}
+async function edge(action,extra={}){let r=await fetch(EDGE,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,last_appid:S.cursor,...extra})});let text=await r.text();let d;try{d=JSON.parse(text)}catch{throw Error(`Backend returned invalid JSON (HTTP ${r.status})`)}if(!r.ok||d.success===false)throw Error(d.error||`Steam processor error (HTTP ${r.status})`);return d}
+async function load(){if(S.loading||!S.more)return;S.loading=true;try{let d=await edge('get_app_page');(d.apps||[]).forEach(a=>{if(!a.steam_app_id||!a.name)return;if(!S.map.has(a.steam_app_id)){S.map.set(a.steam_app_id,a);S.apps.push(a)}});S.cursor=d.next_last_appid||d.last_appid||S.cursor;S.more=!!d.has_more_results;$('#status').textContent=`Steam online · ${S.apps.length.toLocaleString()} games loaded${S.more?' · more available':''}`}catch(e){$('#status').textContent='Steam connection error';toast(e.message)}S.loading=false;render()}
+async function info(id){if(S.details.has(id))return S.details.get(id);try{let r=await fetch(`${STORE}?appids=${id}&l=english&cc=us`),j=await r.json(),d=j?.[id]?.data;if(!d)throw Error();S.details.set(id,d);(d.genres||[]).forEach(g=>S.genres[g.description]=(S.genres[g.description]||0)+1);save();return d}catch(e){toast('Steam details could not be loaded');return null}}
+function card(a,n){let d=S.details.get(a.steam_app_id),p=d?.price_overview,sale=p?.discount_percent>0,id=a.steam_app_id,saved=S.wish.includes(id);return `<article class="card"><div class="cover"><img loading="lazy" src="${cover(id)}" onerror="this.style.display='none'"><span class="rank">${n?`#${n}`:'STEAM'}</span><button class="save ${saved?'saved':''}" onclick="event.stopPropagation();wish(${id})">${saved?'★':'☆'}</button></div><div class="body"><div class="title" title="${esc(a.name)}">${esc(a.name)}</div><div class="meta">${sale?`<span class="tag sale">-${p.discount_percent}%</span>`:''}<span class="tag">${esc((a.genres||[])[0]||'Steam game')}</span></div><div class="price">${p?esc(p.final_formatted):'Open for live details'}${p?.discount_percent?`<span class="old">${esc(p.initial_formatted)}</span>`:''}</div><div class="cardactions"><button class="btn" onclick="openGame(${id})">View</button><button class="btn" onclick="add(${id})">Add</button></div></div></article>`}
+function top10(){let pool=S.apps.filter(a=>!S.q||a.name.toLowerCase().includes(S.q.toLowerCase()));let recent=S.viewed.map(id=>S.map.get(id)).filter(Boolean);let preferred=recent.flatMap(a=>a.genres||[]);if(preferred.length&&!S.q)pool.sort((a,b)=>score(b,preferred)-score(a,preferred));else pool.sort((a,b)=>score(b,[])-score(a,[]));return pool.slice(0,10)}
+function score(a,genres){let d=S.details.get(a.steam_app_id),r=d?.recommendations?.total||0,m=d?.metacritic?.score||0,g=(a.genres||[]);return Math.log10(r+10)*10+m+(g.filter(x=>genres.includes(x)).length*30)+(a.name.length%7)}
+function home(){let t=top10(),recent=S.viewed.map(id=>S.map.get(id)).filter(Boolean).slice(-6).reverse();return `<section class="hero"><div class="eyebrow">● Steam discovery engine</div><h1>Find your next game.<br><span style="color:#aa99ff">Actually.</span></h1><p>GamerGuy searches Steam, shows live game details, builds personal lists, tracks sales and learns what you browse.</p><div class="actions"><button class="btn primary" onclick="focusQ()">Search Steam</button><button class="btn" onclick="page('discover')">Explore categories</button></div></section><section class="section"><div class="head"><div><h2>Top 10 for your current vibe</h2><p>Personalized from searches and games you've opened.</p></div><span class="status"><i></i>${S.apps.length.toLocaleString()} loaded</span></div><div class="grid">${t.map((a,i)=>card(a,i+1)).join('')||'<div class="empty">Loading Steam catalog…</div>'}</div></section>${recent.length?`<section class="section"><div class="head"><div><h2>Because you viewed these</h2><p>GamerGuy uses this to improve recommendations.</p></div></div><div class="grid">${recent.map(a=>card(a)).join('')}</div></section>`:''}`}
+function discover(){let genres=['Horror','Survival Horror','Indie','Action','Adventure','RPG','Strategy','Simulation','Racing','Co-op','Multiplayer','Single-player'],pool=S.apps.filter(a=>!S.q||a.name.toLowerCase().includes(S.q.toLowerCase()));return `<section><div class="head"><div><h2>Discover</h2><p>Pick a category, then GamerGuy ranks the best games it knows.</p></div></div><div class="chips">${genres.map(g=>`<button class="chip ${S.q.toLowerCase()===g.toLowerCase()?'on':''}" onclick="pick('${g}')">${g}</button>`).join('')}</div><div class="bar"><span>${pool.length.toLocaleString()} matching loaded games</span><button class="btn" onclick="load()">Load more</button></div><div class="grid">${pool.slice(0,80).map(a=>card(a)).join('')||'<div class="empty">No match yet. GamerGuy will keep paging through Steam when you search.</div>'}</div></section>`}
+function lists(){return `<section><div class="head"><div><h2>My Lists</h2><p>Your personal game collections.</p></div><button class="btn primary" onclick="newList()">New list</button></div>${Object.entries(S.lists).map(([n,ids])=>`<section class="section"><div class="head"><div><h2>${esc(n)}</h2><p>${ids.length} games</p></div></div><div class="grid">${ids.map(id=>S.map.get(id)).filter(Boolean).map(a=>card(a)).join('')||'<div class="empty">Empty list.</div>'}</div></section>`).join('')||'<div class="empty">Create a list and start collecting games.</div>'}</section>`}
+function wishlist(){let g=S.wish.map(id=>S.map.get(id)).filter(Boolean);return `<section><div class="head"><div><h2>Wishlist</h2><p>Games you want to watch.</p></div></div>${g.length?`<div class="grid">${g.map(a=>card(a)).join('')}</div>`:'<div class="empty">Nothing here yet. Hit ☆ on a game.</div>'}</section>`}
+function alerts(){let g=Object.keys(S.watch).map(Number).map(id=>S.map.get(id)).filter(Boolean);return `<section><div class="head"><div><h2>Alerts</h2><p>Sale and store-change monitoring.</p></div><button class="btn green" onclick="notifyPermission()">Enable browser alerts</button></div><div class="empty">Browser notifications work while GamerGuy is open. True background alerts will need a server scheduler connected to Supabase.</div>${g.map(a=>`<div class="listrow"><div class="grow"><b>${esc(a.name)}</b><br><span class="muted">Watching sale changes</span></div><button class="btn" onclick="openGame(${a.steam_app_id})">Open</button></div>`).join('')}</section>`}
+function render(){let html=S.page==='home'?home():S.page==='discover'?discover():S.page==='lists'?lists():S.page==='wishlist'?wishlist():alerts();$('#view').innerHTML=html;document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('on',b.dataset.page===S.page))}
+function page(p){S.page=p;render();scrollTo({top:0,behavior:'smooth'})}function focusQ(){$('#q').focus()}
+function pick(g){S.q=g;$('#q').value=g;page('discover');searchMore()}
+let timer;async function searchMore(){clearTimeout(timer);timer=setTimeout(async()=>{if(!S.q)return;try{while(!S.apps.some(a=>a.name.toLowerCase().includes(S.q.toLowerCase()))&&S.more&&!S.loading)await load()}catch(e){toast(e.message)}render()},250)}
+function wish(id){S.wish=S.wish.includes(id)?S.wish.filter(x=>x!==id):[...S.wish,id];save();toast(S.wish.includes(id)?'Added to wishlist':'Removed from wishlist');render()}
+function add(id){let ns=Object.keys(S.lists);if(!ns.length){newList();return}$('#choices').innerHTML=ns.map(n=>`<button class="listrow" onclick="addTo('${esc(n)}',${id})"><span class="grow"><b>${esc(n)}</b><br><small class="muted">${S.lists[n].length} games</small></span>+</button>`).join('');$('#modal').classList.add('open')}
+function addTo(n,id){if(!S.lists[n].includes(id))S.lists[n].push(id);save();$('#modal').classList.remove('open');toast('Added to '+n)}
+function newList(){let n=prompt('Name your new list:','My games');if(!n)return;if(!S.lists[n])S.lists[n]=[];save();render();toast('List created')}
+async function openGame(id){let a=S.map.get(id);if(!a)return;if(!S.viewed.includes(id))S.viewed.push(id);save();$('#overlay').classList.add('open');$('#detail').innerHTML='<div class="detailhero"></div>';let d=await info(id);if(!d){$('#detail').innerHTML='<div class="detailhero"><img src="'+cover(id)+'"></div><div class="detail"><h2>'+esc(a.name)+'</h2><p class="muted">Steam details unavailable.</p></div>';return}let p=d.price_overview,sale=p?.discount_percent>0,free=d.is_free,demo=!!d.demos?.length||free,watch=!!S.watch[id],genres=(d.genres||[]).map(x=>x.description);$('#detail').innerHTML=`<div class="detailhero"><img src="${esc(d.header_image||cover(id))}"></div><div class="detail"><h2>${esc(d.name)}</h2><div class="muted">${esc((d.developers||[]).join(', '))}${d.release_date?.date?' · '+esc(d.release_date.date):''}</div><div class="features">${sale?`<span class="feature sale">Sale · ${p.discount_percent}% off</span>`:'<span class="feature">No active sale detected</span>'}${demo?`<span class="feature good">${free?'Free to play':'Demo available'}</span>`:''}${d.metacritic?`<span class="feature">Metacritic ${d.metacritic.score}</span>`:''}${genres.map(g=>`<span class="feature">${esc(g)}</span>`).join('')}</div><div class="stats"><div class="stat"><b>${esc(p?.final_formatted||'See Steam')}</b><small>Current price</small></div><div class="stat"><b>${sale?p.discount_percent+'%':'—'}</b><small>Discount</small></div><div class="stat"><b>${(d.recommendations?.total||0).toLocaleString()||'—'}</b><small>Steam recommendations</small></div></div><p class="muted">${esc((d.short_description||'').replace(/<[^>]*>/g,''))}</p><div class="actions"><a class="btn primary" target="_blank" href="https://store.steampowered.com/app/${id}/">Open Steam</a><button class="btn" onclick="add(${id})">Add to list</button><button class="btn ${watch?'green':''}" onclick="toggleWatch(${id})">${watch?'Watching alerts':'Watch alerts'}</button></div></div>`}
+function toggleWatch(id){if(S.watch[id])delete S.watch[id];else S.watch[id]={sale:null,last:0};save();toast(S.watch[id]?'Alerts enabled':'Alerts disabled');openGame(id)}
+async function notifyPermission(){if(!('Notification'in window)){toast('Notifications are not supported here');return}let p=await Notification.requestPermission();toast(p==='granted'?'Browser alerts enabled':'Permission not granted')}
+async function check(){if(!Object.keys(S.watch).length)return;for(let id of Object.keys(S.watch)){let d=await info(+id);if(!d)continue;let now=d.price_overview?.discount_percent||0,old=S.watch[id].sale;if(old!==null&&now>old&&Notification.permission==='granted')new Notification(d.name,{body:`Now ${now}% off on Steam.`});S.watch[id].sale=now;S.watch[id].last=Date.now()}save()}
+$('#q').addEventListener('input',e=>{S.q=e.target.value.trim();S.page='discover';render();searchMore()});document.addEventListener('click',e=>{let b=e.target.closest('[data-page]');if(b)page(b.dataset.page)});$('#my').onclick=()=>page('lists');$('#bell').onclick=notifyPermission;$('#x').onclick=()=>$('#overlay').classList.remove('open');$('#overlay').onclick=e=>{if(e.target.id==='overlay')$('#overlay').classList.remove('open')};$('#mx').onclick=()=>$('#modal').classList.remove('open');$('#new').onclick=newList;document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();focusQ()}if(e.key==='Escape'){$('#overlay').classList.remove('open');$('#modal').classList.remove('open')}});window.page=page;window.pick=pick;window.load=load;window.openGame=openGame;window.wish=wish;window.add=add;window.addTo=addTo;window.newList=newList;window.toggleWatch=toggleWatch;window.notifyPermission=notifyPermission;
+render();load();setInterval(check,15*60*1000);
+</script></body></html>
