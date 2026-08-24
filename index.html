@@ -118,7 +118,7 @@
 .scorepending{color:#737d90}.scoreline strong{color:#d7dce5}\n
 /* v6 */
 .gamegallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:14px}.gamegallery a{display:block;aspect-ratio:16/9;overflow:hidden;border-radius:12px;border:1px solid #252d3a;background:#111722}.gamegallery img{width:100%;height:100%;object-fit:cover;display:block;transition:.25s}.gamegallery a:hover img{transform:scale(1.04)}.longdesc{color:#c2cad7;line-height:1.75;font-size:14px}.analysisgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.analysiscard{padding:14px;border:1px solid #242c39;border-radius:13px;background:#111722}.analysiscard b{display:block;margin-bottom:5px}.analysiscard span{color:#aeb7c7;line-height:1.5}.verdictbox{padding:16px;border:1px solid #343b49;border-radius:15px;background:linear-gradient(135deg,#121722,#0d1118)}.verdictbox h3{margin:0 0 8px}.recnote{margin-top:8px;color:#8f9aac;font-size:11px}
-</style></head><body>
+.gameposter{position:relative}.imagefallback{position:absolute;inset:0;display:grid;place-items:center;color:#5f6a7e;font-size:12px;background:linear-gradient(135deg,#151a24,#0a0d13);text-align:center;padding:10px}.gamepagehero img{background:#10151e}\n</style></head><body>
 <div class="app"><aside class="side"><div class="logo"><div class="mark"><svg class="ico" viewBox="0 0 24 24"><path d="M7 14l-2 3a2.8 2.8 0 0 0 4.8 2.8l1.4-2h2.6l1.4 2A2.8 2.8 0 0 0 20 17l-2-3"/><path d="M7 14a5 5 0 0 1 10 0M8 10V7m-1.5 1.5h3M15.5 9.5h.01M18 8h.01"/></svg></div>GamerGuy</div><nav class="nav">
 <button class="on" data-page="home"><svg class="ico" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10H3z"/><path d="M9 20v-6h6v6"/></svg>Home</button>
 <button data-page="discover"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="m15 9-2 4-4 2 2-4z"/></svg>Discover</button>
@@ -208,23 +208,26 @@ function toast(t){const e=$('#toast');if(!e)return;e.textContent=t;e.classList.a
 function cover(id,type='poster'){
   const n=encodeURIComponent(id);
   return type==='poster'
-    ? `https://cdn.akamai.steamstatic.com/steam/apps/${n}/capsule_616x353.jpg`
-    : `https://cdn.akamai.steamstatic.com/steam/apps/${n}/header.jpg`;
+    ? `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${n}/capsule_616x353.jpg`
+    : `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${n}/header.jpg`;
 }
-function imageFallbacks(id,type='poster'){
+function imageFallbacks(id,type='poster',extra=[]){
   const n=encodeURIComponent(id);
-  return type==='poster'
+  const base=type==='poster'
     ? [
+      `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${n}/capsule_616x353.jpg`,
+      `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/capsule_616x353.jpg`,
       `https://cdn.akamai.steamstatic.com/steam/apps/${n}/capsule_616x353.jpg`,
       `https://cdn.cloudflare.steamstatic.com/steam/apps/${n}/capsule_616x353.jpg`,
-      `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/header.jpg`,
+      `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${n}/header.jpg`,
       `https://cdn.akamai.steamstatic.com/steam/apps/${n}/header.jpg`
     ]
     : [
+      `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${n}/header.jpg`,
       `https://cdn.akamai.steamstatic.com/steam/apps/${n}/header.jpg`,
-      `https://cdn.cloudflare.steamstatic.com/steam/apps/${n}/header.jpg`,
-      `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/header.jpg`
+      `https://cdn.cloudflare.steamstatic.com/steam/apps/${n}/header.jpg`
     ];
+  return [...extra,...base].filter((v,i,arr)=>v&&arr.indexOf(v)===i);
 }
 function fallbackPoster(id){return cover(id,'header')}
 async function jsonFetch(url){
@@ -276,7 +279,7 @@ function tasteMatch(a){
  const preferred=S.prefs.preferredGenres||[],avoids=S.prefs.avoidGenres||[];
  if(avoids.some(g=>gs.includes(g.toLowerCase())))return false;
  if(!preferred.length)return true;
- return preferred.some(g=>gs.includes(g.toLowerCase()));
+ return preferred.every(g=>gs.includes(g.toLowerCase()));
 }
 function reviewStats(d,id){
   const live=S.reviewSummaries.get(id)||S.reviews.get(id);
@@ -426,12 +429,12 @@ async function exactSearch(term){
 }
 function card(a,n){
  const id=a.steam_app_id,d=detail(id),si=scoreInfo(a),saved=S.wish.includes(id);
- const fallbacks=imageFallbacks(id,'poster').join('|');
- const img=cover(id,'poster');
+ const primary=d?.header_image||a.tiny_image||cover(id,'poster');
+ const fallbacks=imageFallbacks(id,'poster',[d?.header_image,a.tiny_image]);
  const price=d?priceText(d):'Price unavailable';
  return `<article class="gamecard" onclick="openGame(${id})">
    <div class="gameposter">
-     <img loading="lazy" src="${img}" data-fallbacks="${esc(fallbacks)}" data-fi="0"
+     <img loading="lazy" src="${esc(primary)}" data-fallbacks="${esc(fallbacks.join('|'))}" data-fi="1"
        onerror="imgNext(this)">
      ${n?`<span class="rank">#${n}</span>`:''}
      <span class="save ${saved?'saved':''}" onclick="event.stopPropagation();wish(${id})">${ggIcon('star')}</span>
@@ -446,9 +449,24 @@ function card(a,n){
 }
 function imgNext(img){
  const list=(img.dataset.fallbacks||'').split('|').filter(Boolean);
- const i=Number(img.dataset.fi||0);
- if(i<list.length){img.dataset.fi=String(i+1);img.src=list[i];}
- else{img.removeAttribute('onerror');img.style.visibility='hidden';}
+ let i=Number(img.dataset.fi||0);
+ while(i<list.length){
+   const next=list[i++];
+   if(next && next!==img.src){
+     img.dataset.fi=String(i);
+     img.src=next;
+     return;
+   }
+ }
+ img.onerror=null;
+ img.style.visibility='hidden';
+ const parent=img.closest('.gameposter');
+ if(parent && !parent.querySelector('.imagefallback')){
+   const f=document.createElement('div');
+   f.className='imagefallback';
+   f.textContent='Artwork unavailable';
+   parent.appendChild(f);
+ }
 }
 async function hydrate(ids){
  const unique=[...new Set(ids)];
@@ -523,9 +541,15 @@ function renderGameLoading(){document.querySelectorAll('[data-page]').forEach(b=
 function goBack(){S.page='discover';S.gameId=null;history.replaceState(null,'','#discover');render()}
 async function loadGame(id){
  const a=S.map.get(id);if(!a){goBack();return}
- const d=await info(id);if(!d){$('#view').innerHTML=`<section class="gamepage"><button class="btn backbtn" onclick="goBack()">${ggIcon('arrow')} Back to results</button><div class="empty">Steam details could not be reached right now. Refresh and try again.</div></section>`;return}
- const rr=await Promise.allSettled([reviewInfo(id),reviews(id),news(id)]);
- renderGame(a,d,rr[1]?.status==='fulfilled'?rr[1].value:null,[])
+ try{
+   const d=await info(id);
+   if(!d)throw Error('Steam details unavailable');
+   const rr=await Promise.allSettled([reviewInfo(id),reviews(id),news(id)]);
+   renderGame(a,d,rr[1]?.status==='fulfilled'?rr[1].value:null,[]);
+ }catch(e){
+   console.error(e);
+   $('#view').innerHTML=`<section class="gamepage"><button class="btn backbtn" onclick="goBack()">${ggIcon('arrow')} Back to results</button><div class="empty"><h3>Game details could not be loaded</h3><p>${esc(e.message||'Unknown error')}</p><button class="btn" onclick="loadGame(${id})">Try again</button></div></section>`;
+ }
 }
 async function refreshRecommendations(){const pool=await buildTastePool();if(S.page==='home')render();return pool}
 async function reviewInfo(id){
@@ -553,7 +577,7 @@ function analysisData(d,x,summary){const factors=[];if(x.positive!==null)factors
 function renderGame(a,d,rv,nw){
  const x=scoreInfo(a),t=tier(x.score),rating=S.ratings[a.steam_app_id]||0,genres=(d.genres||[]).map(g=>g.description),summary=rv?.query_summary,sale=d.price_overview?.discount_percent>0,watched=!!S.watch[a.steam_app_id],owned=S.owned.has(a.steam_app_id),an=analysisData(d,x,summary),shots=(d.screenshots||[]).slice(0,9),longDesc=an.desc||'Steam has not provided a longer description for this title.';
  const verdict=x.score===null?'Not enough public review data is available to make a defensible score yet.':`${t[1]}. The ${x.score}/100 score is based mainly on Steam player sentiment${x.positive!==null?` (${x.positive}% positive)`:''}${x.meta!==null?` and Metacritic (${x.meta})`:''}, with review volume used as a confidence signal.`;
- $('#view').innerHTML=`<section class="gamepage"><button class="btn backbtn" onclick="goBack()">${ggIcon('arrow')} Back to results</button><div class="gamepagehero"><img src="${esc(d.header_image||fallbackPoster(a.steam_app_id))}" alt="${esc(d.name)}"></div><div class="gamepagehead"><div class="scorebadge"><span class="score-dot dot-${t[0]}"></span>${x.score===null?'Score pending':`GamerGuy ${x.score}/100`} <span class="scorelabel">${esc(t[1])}</span></div><h1>${esc(d.name)}</h1><div class="muted">${esc((d.developers||[]).join(', '))}${d.release_date?.date?' · '+esc(d.release_date.date):''}</div><div class="genrechips">${genres.map(g=>`<span class="genrechip">${esc(g)}</span>`).join('')}</div></div><div class="detailgrid"><div class="detailpanel"><h2>Game overview</h2><p class="longdesc">${esc(longDesc)}</p><div class="metricgrid"><div class="metric"><b>${priceText(d)}</b><small>${sale?`${d.price_overview.discount_percent}% off on Steam`:'Current Steam price'}</small></div><div class="metric"><b>${x.positive!==null?x.positive+'%':'—'}</b><small>Steam positive</small></div><div class="metric"><b>${x.meta??'—'}</b><small>Metacritic</small></div><div class="metric"><b>${d.demos?.length?'Yes':'No'}</b><small>Demo</small></div></div>${x.positive!==null?`<div class="reviewbar"><span style="width:${x.positive}%"></span></div><div class="reviewcount">${esc(summary?.review_score_desc||'Steam review sentiment')} · ${Number(summary?.total||x.recs||0).toLocaleString()} Steam reviews</div>`:''}</div><aside class="detailpanel"><h2>Your options</h2><div class="optionstack"><button class="btn ${S.wish.includes(a.steam_app_id)?'green':''}" onclick="wish(${a.steam_app_id})">${ggIcon('star')} ${S.wish.includes(a.steam_app_id)?'Wishlisted':'Add to wishlist'}</button><button class="btn ${watched?'green':''}" onclick="toggleWatch(${a.steam_app_id})">${ggIcon('bell')} ${watched?'Watching alerts':'Watch this game'}</button><button class="btn ${owned?'green':''}" onclick="markOwned(${a.steam_app_id})">${ggIcon('check')} ${owned?'Owned':'I already own this'}</button><button class="btn" onclick="hideGame(${a.steam_app_id})">${ggIcon('eyeoff')} Never show again</button><a class="btn primary" target="_blank" rel="noopener" href="https://store.steampowered.com/app/${a.steam_app_id}/">Open on Steam</a></div><div class="personalrate"><h3>Your rating</h3><div class="stars">${[1,2,3,4,5].map(n=>`<button class="rate ${rating>=n?'on':''}" onclick="rate(${a.steam_app_id},${n})">${ggIcon('star')}</button>`).join('')}</div></div></aside></div>${shots.length?`<div class="detailpanel" style="margin-top:16px"><h2>More screenshots</h2><div class="gamegallery">${shots.map(s=>`<a href="${esc(s.path_full||s.path_thumbnail)}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(s.path_thumbnail||s.path_full)}" alt="${esc(d.name)} screenshot"></a>`).join('')}</div></div>`:''}<div class="detailpanel" style="margin-top:16px"><h2>Why GamerGuy gave this score</h2><div class="verdictbox"><h3>${esc(t[1])}</h3><p class="muted">${esc(verdict)}</p></div><div class="analysisgrid" style="margin-top:12px">${an.factors.map((f,i)=>`<div class="analysiscard"><b>${['Player reception','Critic reception','Confidence','Game context','Try before buy'][i]||'Analysis'}</b><span>${esc(f)}</span></div>`).join('')}</div></div><div class="detailpanel" style="margin-top:16px"><h2>Steam reviews</h2>${rv?.reviews?.length?rv.reviews.map(r=>`<article class="review"><div class="reviewtop"><b>${r.voted_up?'Positive':'Negative'}</b><span>${new Date((r.timestamp_created||0)*1000).toLocaleDateString()}</span></div><p>${esc((r.review||'').slice(0,700))}${(r.review||'').length>700?'…':''}</p></article>`).join(''):'<div class="empty">Steam review text is temporarily unavailable.</div>'}</div></section>`;
+ $('#view').innerHTML=`<section class="gamepage"><button class="btn backbtn" onclick="goBack()">${ggIcon('arrow')} Back to results</button><div class="gamepagehero"><img src="${esc(d.header_image||a.tiny_image||cover(a.steam_app_id,'header'))}" data-fallbacks="${esc(imageFallbacks(a.steam_app_id,'header',[d.header_image,a.tiny_image]).join('|'))}" data-fi="1" onerror="imgNext(this)" alt="${esc(d.name)}"></div><div class="gamepagehead"><div class="scorebadge"><span class="score-dot dot-${t[0]}"></span>${x.score===null?'Score pending':`GamerGuy ${x.score}/100`} <span class="scorelabel">${esc(t[1])}</span></div><h1>${esc(d.name)}</h1><div class="muted">${esc((d.developers||[]).join(', '))}${d.release_date?.date?' · '+esc(d.release_date.date):''}</div><div class="genrechips">${genres.map(g=>`<span class="genrechip">${esc(g)}</span>`).join('')}</div></div><div class="detailgrid"><div class="detailpanel"><h2>Game overview</h2><p class="longdesc">${esc(longDesc)}</p><div class="metricgrid"><div class="metric"><b>${priceText(d)}</b><small>${sale?`${d.price_overview.discount_percent}% off on Steam`:'Current Steam price'}</small></div><div class="metric"><b>${x.positive!==null?x.positive+'%':'—'}</b><small>Steam positive</small></div><div class="metric"><b>${x.meta??'—'}</b><small>Metacritic</small></div><div class="metric"><b>${d.demos?.length?'Yes':'No'}</b><small>Demo</small></div></div>${x.positive!==null?`<div class="reviewbar"><span style="width:${x.positive}%"></span></div><div class="reviewcount">${esc(summary?.review_score_desc||'Steam review sentiment')} · ${Number(summary?.total||x.recs||0).toLocaleString()} Steam reviews</div>`:''}</div><aside class="detailpanel"><h2>Your options</h2><div class="optionstack"><button class="btn ${S.wish.includes(a.steam_app_id)?'green':''}" onclick="wish(${a.steam_app_id})">${ggIcon('star')} ${S.wish.includes(a.steam_app_id)?'Wishlisted':'Add to wishlist'}</button><button class="btn ${watched?'green':''}" onclick="toggleWatch(${a.steam_app_id})">${ggIcon('bell')} ${watched?'Watching alerts':'Watch this game'}</button><button class="btn ${owned?'green':''}" onclick="markOwned(${a.steam_app_id})">${ggIcon('check')} ${owned?'Owned':'I already own this'}</button><button class="btn" onclick="hideGame(${a.steam_app_id})">${ggIcon('eyeoff')} Never show again</button><a class="btn primary" target="_blank" rel="noopener" href="https://store.steampowered.com/app/${a.steam_app_id}/">Open on Steam</a></div><div class="personalrate"><h3>Your rating</h3><div class="stars">${[1,2,3,4,5].map(n=>`<button class="rate ${rating>=n?'on':''}" onclick="rate(${a.steam_app_id},${n})">${ggIcon('star')}</button>`).join('')}</div></div></aside></div>${shots.length?`<div class="detailpanel" style="margin-top:16px"><h2>More screenshots</h2><div class="gamegallery">${shots.map(s=>`<a href="${esc(s.path_full||s.path_thumbnail)}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(s.path_thumbnail||s.path_full)}" alt="${esc(d.name)} screenshot"></a>`).join('')}</div></div>`:''}<div class="detailpanel" style="margin-top:16px"><h2>Why GamerGuy gave this score</h2><div class="verdictbox"><h3>${esc(t[1])}</h3><p class="muted">${esc(verdict)}</p></div><div class="analysisgrid" style="margin-top:12px">${an.factors.map((f,i)=>`<div class="analysiscard"><b>${['Player reception','Critic reception','Confidence','Game context','Try before buy'][i]||'Analysis'}</b><span>${esc(f)}</span></div>`).join('')}</div></div><div class="detailpanel" style="margin-top:16px"><h2>Steam reviews</h2>${rv?.reviews?.length?rv.reviews.map(r=>`<article class="review"><div class="reviewtop"><b>${r.voted_up?'Positive':'Negative'}</b><span>${new Date((r.timestamp_created||0)*1000).toLocaleDateString()}</span></div><p>${esc((r.review||'').slice(0,700))}${(r.review||'').length>700?'…':''}</p></article>`).join(''):'<div class="empty">Steam review text is temporarily unavailable.</div>'}</div></section>`;
 }
 function home(){
  const recent=S.viewed.map(id=>S.map.get(id)).filter(a=>a&&!S.hidden.has(a.steam_app_id)).slice(-6).reverse();
