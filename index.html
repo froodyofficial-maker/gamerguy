@@ -118,7 +118,7 @@
 .scorepending{color:#737d90}.scoreline strong{color:#d7dce5}\n
 /* v6 */
 .gamegallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:14px}.gamegallery a{display:block;aspect-ratio:16/9;overflow:hidden;border-radius:12px;border:1px solid #252d3a;background:#111722}.gamegallery img{width:100%;height:100%;object-fit:cover;display:block;transition:.25s}.gamegallery a:hover img{transform:scale(1.04)}.longdesc{color:#c2cad7;line-height:1.75;font-size:14px}.analysisgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.analysiscard{padding:14px;border:1px solid #242c39;border-radius:13px;background:#111722}.analysiscard b{display:block;margin-bottom:5px}.analysiscard span{color:#aeb7c7;line-height:1.5}.verdictbox{padding:16px;border:1px solid #343b49;border-radius:15px;background:linear-gradient(135deg,#121722,#0d1118)}.verdictbox h3{margin:0 0 8px}.recnote{margin-top:8px;color:#8f9aac;font-size:11px}
-.gameposter{position:relative}.imagefallback{position:absolute;inset:0;display:grid;place-items:center;color:#5f6a7e;font-size:12px;background:linear-gradient(135deg,#151a24,#0a0d13);text-align:center;padding:10px}.gamepagehero img{background:#10151e}\n.gameposter img{background:linear-gradient(135deg,#141a25,#0b0f16);min-height:100%;object-fit:cover}.imagefallback{position:absolute;inset:0;display:grid;place-items:center;color:#647087;background:linear-gradient(135deg,#151b26,#090c12);font-size:12px}\n.gamecard{cursor:pointer}.gameposter{position:relative;overflow:hidden}.gameposter img{display:block;width:100%;height:100%;object-fit:cover;min-height:100%;background:#0b0f16}.imagefallback{position:absolute;inset:0;display:grid;place-items:center;color:#6b7587;background:linear-gradient(135deg,#151a24,#090c12);font-size:12px}\n.gamecard{display:block;color:inherit;text-decoration:none}.gamecard:focus-visible{outline:2px solid #8c74ff;outline-offset:3px}.gameposter{min-height:190px}.gameposter img{display:block;width:100%;height:100%;object-fit:cover}.save{position:absolute;z-index:5}\n</style></head><body>
+.gameposter{position:relative}.imagefallback{position:absolute;inset:0;display:grid;place-items:center;color:#5f6a7e;font-size:12px;background:linear-gradient(135deg,#151a24,#0a0d13);text-align:center;padding:10px}.gamepagehero img{background:#10151e}\n.gameposter img{background:linear-gradient(135deg,#141a25,#0b0f16);min-height:100%;object-fit:cover}.imagefallback{position:absolute;inset:0;display:grid;place-items:center;color:#647087;background:linear-gradient(135deg,#151b26,#090c12);font-size:12px}\n.gamecard{cursor:pointer}.gameposter{position:relative;overflow:hidden}.gameposter img{display:block;width:100%;height:100%;object-fit:cover;min-height:100%;background:#0b0f16}.imagefallback{position:absolute;inset:0;display:grid;place-items:center;color:#6b7587;background:linear-gradient(135deg,#151a24,#090c12);font-size:12px}\n.gamecard{display:block;color:inherit;text-decoration:none}.gamecard:focus-visible{outline:2px solid #8c74ff;outline-offset:3px}.gameposter{min-height:190px}.gameposter img{display:block;width:100%;height:100%;object-fit:cover}.save{position:absolute;z-index:5}\n.gamecard,.gameposter{contain:layout paint}.gameposter{aspect-ratio:460/215;min-height:0}.gameposter img{display:block;width:100%;height:100%;object-fit:cover;transition:none!important}.imagefallback{position:absolute;inset:0;display:grid;place-items:center;color:#758197;background:#0c1119;font-size:12px}.rec-loading{min-height:180px;border:1px solid var(--line);border-radius:18px;background:#0e131b;display:flex;align-items:center;justify-content:center;gap:12px;color:#8f99ab}.spinner{width:20px;height:20px;border:2px solid #303747;border-top-color:#8a70ff;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}\n</style></head><body>
 <div class="app"><aside class="side"><div class="logo"><div class="mark"><svg class="ico" viewBox="0 0 24 24"><path d="M7 14l-2 3a2.8 2.8 0 0 0 4.8 2.8l1.4-2h2.6l1.4 2A2.8 2.8 0 0 0 20 17l-2-3"/><path d="M7 14a5 5 0 0 1 10 0M8 10V7m-1.5 1.5h3M15.5 9.5h.01M18 8h.01"/></svg></div>GamerGuy</div><nav class="nav">
 <button class="on" data-page="home"><svg class="ico" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10H3z"/><path d="M9 20v-6h6v6"/></svg>Home</button>
 <button data-page="discover"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="m15 9-2 4-4 2 2-4z"/></svg>Discover</button>
@@ -176,7 +176,7 @@ const S={
  q:'',apps:[],map:new Map(),cursor:0,more:true,loading:false,details:new Map(),reviews:new Map(),reviewSummaries:new Map(),reviewLists:new Map(),
  viewed:read('ggViewed',[]),wish:read('ggWish',[]),lists:read('ggLists',{}),watch:read('ggWatch',{}),
  hidden:new Set(read('ggHidden',[])),owned:new Set(read('ggOwned',[])),ratings:read('ggRatings',{}),
- selectedGenres:read('ggSelectedGenres',[]),filterBusy:false,
+ selectedGenres:read('ggSelectedGenres',[]),filterBusy:false,recBusy:false,recs:[],
  prefs:Object.assign({
  preferredGenres:[],avoidGenres:[],maxPrice:100,minScore:0,minSteamPositive:0,hideBad:false,
  preferSingle:false,preferIndie:false,avoidEarly:false,freeOnly:false,
@@ -205,26 +205,24 @@ function save(){
  localStorage.ggPrefs=JSON.stringify(S.prefs);
 }
 function toast(t){const e=$('#toast');if(!e)return;e.textContent=t;e.classList.add('show');clearTimeout(window.ggToast);window.ggToast=setTimeout(()=>e.classList.remove('show'),2600)}
+function imageUrl(id){
+  return `${EDGE}?action=image&appid=${encodeURIComponent(id)}&type=header`;
+}
 function cover(id,type='poster'){
-  const n=encodeURIComponent(id);
-  return type==='poster'
-    ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${n}/header.jpg`
-    : `https://cdn.cloudflare.steamstatic.com/steam/apps/${n}/header.jpg`;
+  return imageUrl(id);
 }
 function imageFallbacks(id,type='poster',extra=[]){
   const n=encodeURIComponent(id);
-  const originals=[
+  return [
+    imageUrl(id),
     ...extra,
     `https://cdn.cloudflare.steamstatic.com/steam/apps/${n}/header.jpg`,
     `https://cdn.akamai.steamstatic.com/steam/apps/${n}/header.jpg`,
     `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/header.jpg`,
-    `https://cdn.cloudflare.steamstatic.com/steam/apps/${n}/capsule_616x353.jpg`,
-    `https://cdn.akamai.steamstatic.com/steam/apps/${n}/capsule_616x353.jpg`
-  ].filter(Boolean);
-  const proxied=originals.map(u=>`https://images.weserv.nl/?url=${encodeURIComponent(u)}`);
-  return [...originals,...proxied].filter((v,i,arr)=>v&&arr.indexOf(v)===i);
+    `https://images.weserv.nl/?url=${encodeURIComponent(`https://cdn.cloudflare.steamstatic.com/steam/apps/${n}/header.jpg`)}`
+  ].filter((v,i,arr)=>v&&arr.indexOf(v)===i);
 }
-function fallbackPoster(id){return cover(id,'header')}
+function fallbackPoster(id){return imageUrl(id)}
 async function jsonFetch(url){
   const r=await fetch(url,{cache:'no-store',headers:{'Accept':'application/json'}});
   const text=await r.text();
@@ -337,16 +335,19 @@ async function buildTastePool(){
     const batches=await Promise.all(preferred.slice(0,6).map(g=>storeSearch(g)));
     const candidates=[...new Map(batches.flat().map(a0=>[a0.steam_app_id,a0])).values()];
     for(const a0 of candidates)S.map.set(a0.steam_app_id,a0);
-    await hydrate(candidates.slice(0,140).map(a0=>a0.steam_app_id));
+    await hydrate(candidates.slice(0,180).map(a0=>a0.steam_app_id));
 
-    pool=candidates.filter(a0=>{
+    pool=candidates.map(a0=>{
       const id=a0.steam_app_id;
-      if(S.hidden.has(id)||S.owned.has(id))return false;
-      const gs=ggGenres(a0).map(x=>x.toLowerCase());
-      if(!preferred.every(g=>gs.includes(g.toLowerCase())))return false;
-      if(avoided.some(g=>gs.includes(g)))return false;
       const d=detail(id);
-      if(!d)return false;
+      const gs=ggGenres(a0).map(x=>x.toLowerCase());
+      const matches=preferred.filter(g=>gs.includes(g.toLowerCase())).length;
+      return {a:a0,matches,d};
+    }).filter(x=>{
+      const {a:a0,matches,d}=x,id=a0.steam_app_id,gs=ggGenres(a0).map(g=>g.toLowerCase());
+      if(S.hidden.has(id)||S.owned.has(id)||!d)return false;
+      if(!matches)return false;
+      if(avoided.some(g=>gs.includes(g)))return false;
       if(S.prefs.freeOnly&&!d.is_free)return false;
       if(S.prefs.maxPrice<100&&!d.is_free&&(d.price_overview?.final||0)>S.prefs.maxPrice*100)return false;
       if(S.prefs.minScore>0&&(Number(d.metacritic?.score)||0)<S.prefs.minScore)return false;
@@ -356,7 +357,10 @@ async function buildTastePool(){
       }
       if(S.prefs.avoidEarly&&d.is_early_access)return false;
       return true;
-    });
+    }).sort((x,y)=>{
+      if(y.matches!==x.matches)return y.matches-x.matches;
+      return ggScore(y.a)-ggScore(x.a);
+    }).map(x=>x.a);
   }else{
     const viewed=S.viewed.slice(-12).map(id=>S.map.get(id)).filter(Boolean);
     const counts={};
@@ -366,20 +370,21 @@ async function buildTastePool(){
       const batches=await Promise.all(inferred.map(g=>storeSearch(g)));
       const candidates=[...new Map(batches.flat().map(a0=>[a0.steam_app_id,a0])).values()];
       for(const a0 of candidates)S.map.set(a0.steam_app_id,a0);
-      await hydrate(candidates.slice(0,120).map(a0=>a0.steam_app_id));
+      await hydrate(candidates.slice(0,140).map(a0=>a0.steam_app_id));
       pool=candidates.filter(a0=>!S.hidden.has(a0.steam_app_id)&&!S.owned.has(a0.steam_app_id)&&tasteMatch(a0));
     }else{
       pool=S.apps.filter(a0=>!S.hidden.has(a0.steam_app_id)&&!S.owned.has(a0.steam_app_id));
     }
   }
 
-  return pool.sort((a,b)=>{
-    const sb=ggScore(b),sa=ggScore(a);
-    if(sb!==sa)return sb-sa;
-    return a.name.localeCompare(b.name);
-  }).slice(0,60);
+  // Give every refresh a different selection while keeping the best-fit pool.
+  const top=pool.slice(0,40);
+  for(let i=top.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [top[i],top[j]]=[top[j],top[i]];
+  }
+  return top.slice(0,10);
 }
-
 function searchRank(name,term){
  const a=String(name||'').toLowerCase().trim(), b=String(term||'').toLowerCase().trim();
  if(!b)return 0;
@@ -442,17 +447,14 @@ function card(a,n){
 function imgNext(img){
  const list=(img.dataset.fallbacks||'').split('|').filter(Boolean);
  let i=Number(img.dataset.fi||0);
- while(i<list.length){
-   const next=list[i++];
-   if(next && next!==img.src){
-     img.dataset.fi=String(i);
-     img.src=next;
-     return;
-   }
+ if(i<list.length){
+   img.dataset.fi=String(i+1);
+   img.src=list[i];
+   return;
  }
  img.onerror=null;
- img.style.visibility='hidden';
- const parent=img.closest('.gameposter');
+ img.style.opacity='0';
+ const parent=img.closest('.gameposter,.gamepagehero');
  if(parent && !parent.querySelector('.imagefallback')){
    const f=document.createElement('div');
    f.className='imagefallback';
@@ -567,7 +569,7 @@ async function loadGame(id){
    toast(e.message||'Steam details unavailable');
  }
 }
-async function refreshRecommendations(){const pool=await buildTastePool();if(S.page==='home')render();return pool}
+async function refreshRecommendations(){S.recBusy=true;if(S.page==='home')render();try{S.recs=await buildTastePool();return S.recs}finally{S.recBusy=false;if(S.page==='home')render()}}
 async function reviewInfo(id){
   if(S.reviewSummaries.has(id))return S.reviewSummaries.get(id);
   try{
@@ -597,18 +599,15 @@ function renderGame(a,d,rv,nw){
 }
 function home(){
  const recent=S.viewed.map(id=>S.map.get(id)).filter(a=>a&&!S.hidden.has(a.steam_app_id)).slice(-6).reverse();
- const fallback=S.apps.filter(a=>!S.hidden.has(a.steam_app_id)&&!S.owned.has(a.steam_app_id)&&tasteMatch(a));
- const rec=ggTop(fallback).slice(0,10);
- if(!window.ggRecBusy){
-   window.ggRecBusy=true;
-   setTimeout(async()=>{
-     try{await refreshRecommendations()}
-     catch(e){console.warn('Recommendation build failed',e)}
-     finally{window.ggRecBusy=false}
-   },30);
+ const rec=S.recs||[];
+ if(!window.ggRecKickoff){
+   window.ggRecKickoff=true;
+   setTimeout(()=>refreshRecommendations().catch(e=>{console.warn('Recommendation build failed',e)}),30);
  }
- setTimeout(()=>hydrate([...rec,...recent].map(a=>a.steam_app_id)),20);
- return `<section class="hero"><div class="eyebrow">GAMER DISCOVERY</div><h1>Find games that fit.</h1><p>Search Steam, combine genres, tune your taste, and get recommendations based on what you actually like.</p><div class="actions"><button class="btn primary" onclick="focusQ()">${ggIcon('search')} Search Steam</button><button class="btn" onclick="nav('discover')">${ggIcon('discover')} Discover</button></div></section><section class="section"><div class="head"><div><h2>Top 10 for you</h2><p>${S.prefs.preferredGenres.length?`Tailored to: ${esc(S.prefs.preferredGenres.join(', '))}`:'Based on your browsing and saved taste'}</p></div></div><div class="grid">${rec.map((a,i)=>card(a,i+1)).join('')||'<div class="tasteempty">Choose preferred genres in Settings to build recommendations.</div>'}</div></section>${recent.length?`<section class="section"><div class="head"><div><h2>Recently viewed</h2></div></div><div class="grid">${recent.map(a=>card(a)).join('')}</div></section>`:''}`;
+ const recMarkup=S.recBusy && !rec.length
+   ? `<div class="rec-loading"><span class="spinner"></span><span>Building your recommendations…</span></div>`
+   : (rec.length?`<div class="grid">${rec.map((a,i)=>card(a,i+1)).join('')}</div>`:`<div class="tasteempty">Choose preferred genres in Settings to build recommendations.</div>`);
+ return `<section class="hero"><div class="eyebrow">GAMER DISCOVERY</div><h1>Find games that fit.</h1><p>Search Steam, combine genres, tune your taste, and get recommendations based on what you actually like.</p><div class="actions"><button class="btn primary" onclick="focusQ()">${ggIcon('search')} Search Steam</button><button class="btn" onclick="nav('discover')">${ggIcon('discover')} Discover</button></div></section><section class="section"><div class="head"><div><h2>Top 10 for you</h2><p>${S.prefs.preferredGenres.length?`Tailored to: ${esc(S.prefs.preferredGenres.join(', '))}`:'Based on your browsing and saved taste'}</p></div></div>${recMarkup}</section>${recent.length?`<section class="section"><div class="head"><div><h2>Recently viewed</h2></div></div><div class="grid">${recent.map(a=>card(a)).join('')}</div></section>`:''}`;
 }
 function wishlist(){const g=S.wish.map(id=>S.map.get(id)).filter(a=>a&&!S.hidden.has(a.steam_app_id));setTimeout(()=>hydrate(g.map(a=>a.steam_app_id)),20);return `<section><div class="head"><div><h2>Wishlist</h2><p>Starred games follow your notification settings.</p></div></div>${g.length?`<div class="grid">${g.map(a=>card(a)).join('')}</div>`:'<div class="empty">Your wishlist is empty.</div>'}</section>`}
 function lists(){return `<section><div class="head"><div><h2>My Lists</h2><p>Personal collections.</p></div><button class="btn primary" onclick="newList()">${ggIcon('plus')} New list</button></div>${Object.entries(S.lists).map(([n,ids])=>{const g=ids.map(id=>S.map.get(id)).filter(Boolean);setTimeout(()=>hydrate(g.map(a=>a.steam_app_id)),20);return `<section class="section"><div class="head"><div><h2>${esc(n)}</h2><p>${g.length} games</p></div></div><div class="grid">${g.map(a=>card(a)).join('')||'<div class="empty">Empty list.</div>'}</div></section>`}).join('')||'<div class="empty">Create a list and start collecting games.</div>'}</section>`}
@@ -734,5 +733,5 @@ async function bootGamerGuy(){
  catch(e){ console.error('Steam catalog load failed',e); const st=$('#status'); if(st) st.textContent='Steam temporarily unavailable'; toast('Steam is temporarily unavailable. You can still use saved games and settings.'); }
 }
 
-bootGamerGuy().then(()=>{if(location.hash.startsWith('#game-'))routeHash()}); setInterval(()=>{try{check()}catch(e){console.warn(e)}},15*60*1000);
+bootGamerGuy().then(async()=>{try{await refreshRecommendations()}catch(e){console.warn(e)} if(location.hash.startsWith('#game-'))routeHash()}); setInterval(()=>{try{check()}catch(e){console.warn(e)}},15*60*1000);
 </script></body></html>
