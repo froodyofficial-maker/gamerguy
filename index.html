@@ -118,7 +118,7 @@
 .scorepending{color:#737d90}.scoreline strong{color:#d7dce5}\n
 /* v6 */
 .gamegallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:14px}.gamegallery a{display:block;aspect-ratio:16/9;overflow:hidden;border-radius:12px;border:1px solid #252d3a;background:#111722}.gamegallery img{width:100%;height:100%;object-fit:cover;display:block;transition:.25s}.gamegallery a:hover img{transform:scale(1.04)}.longdesc{color:#c2cad7;line-height:1.75;font-size:14px}.analysisgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.analysiscard{padding:14px;border:1px solid #242c39;border-radius:13px;background:#111722}.analysiscard b{display:block;margin-bottom:5px}.analysiscard span{color:#aeb7c7;line-height:1.5}.verdictbox{padding:16px;border:1px solid #343b49;border-radius:15px;background:linear-gradient(135deg,#121722,#0d1118)}.verdictbox h3{margin:0 0 8px}.recnote{margin-top:8px;color:#8f9aac;font-size:11px}
-.gameposter{position:relative}.imagefallback{position:absolute;inset:0;display:grid;place-items:center;color:#5f6a7e;font-size:12px;background:linear-gradient(135deg,#151a24,#0a0d13);text-align:center;padding:10px}.gamepagehero img{background:#10151e}\n.gameposter img{background:linear-gradient(135deg,#141a25,#0b0f16);min-height:100%;object-fit:cover}.imagefallback{position:absolute;inset:0;display:grid;place-items:center;color:#647087;background:linear-gradient(135deg,#151b26,#090c12);font-size:12px}\n</style></head><body>
+.gameposter{position:relative}.imagefallback{position:absolute;inset:0;display:grid;place-items:center;color:#5f6a7e;font-size:12px;background:linear-gradient(135deg,#151a24,#0a0d13);text-align:center;padding:10px}.gamepagehero img{background:#10151e}\n.gameposter img{background:linear-gradient(135deg,#141a25,#0b0f16);min-height:100%;object-fit:cover}.imagefallback{position:absolute;inset:0;display:grid;place-items:center;color:#647087;background:linear-gradient(135deg,#151b26,#090c12);font-size:12px}\n.gamecard{cursor:pointer}.gameposter{position:relative;overflow:hidden}.gameposter img{display:block;width:100%;height:100%;object-fit:cover;min-height:100%;background:#0b0f16}.imagefallback{position:absolute;inset:0;display:grid;place-items:center;color:#6b7587;background:linear-gradient(135deg,#151a24,#090c12);font-size:12px}\n.gamecard{display:block;color:inherit;text-decoration:none}.gamecard:focus-visible{outline:2px solid #8c74ff;outline-offset:3px}.gameposter{min-height:190px}.gameposter img{display:block;width:100%;height:100%;object-fit:cover}.save{position:absolute;z-index:5}\n</style></head><body>
 <div class="app"><aside class="side"><div class="logo"><div class="mark"><svg class="ico" viewBox="0 0 24 24"><path d="M7 14l-2 3a2.8 2.8 0 0 0 4.8 2.8l1.4-2h2.6l1.4 2A2.8 2.8 0 0 0 20 17l-2-3"/><path d="M7 14a5 5 0 0 1 10 0M8 10V7m-1.5 1.5h3M15.5 9.5h.01M18 8h.01"/></svg></div>GamerGuy</div><nav class="nav">
 <button class="on" data-page="home"><svg class="ico" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10H3z"/><path d="M9 20v-6h6v6"/></svg>Home</button>
 <button data-page="discover"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="m15 9-2 4-4 2 2-4z"/></svg>Discover</button>
@@ -208,26 +208,21 @@ function toast(t){const e=$('#toast');if(!e)return;e.textContent=t;e.classList.a
 function cover(id,type='poster'){
   const n=encodeURIComponent(id);
   return type==='poster'
-    ? `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/capsule_616x353.jpg`
-    : `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/header.jpg`;
+    ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${n}/header.jpg`
+    : `https://cdn.cloudflare.steamstatic.com/steam/apps/${n}/header.jpg`;
 }
 function imageFallbacks(id,type='poster',extra=[]){
   const n=encodeURIComponent(id);
-  const originals = type==='poster'
-    ? [
-      `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/capsule_616x353.jpg`,
-      `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/header.jpg`,
-      `https://cdn.akamai.steamstatic.com/steam/apps/${n}/capsule_616x353.jpg`,
-      `https://cdn.cloudflare.steamstatic.com/steam/apps/${n}/capsule_616x353.jpg`,
-      `https://cdn.akamai.steamstatic.com/steam/apps/${n}/header.jpg`
-    ]
-    : [
-      `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/header.jpg`,
-      `https://cdn.akamai.steamstatic.com/steam/apps/${n}/header.jpg`,
-      `https://cdn.cloudflare.steamstatic.com/steam/apps/${n}/header.jpg`
-    ];
+  const originals=[
+    ...extra,
+    `https://cdn.cloudflare.steamstatic.com/steam/apps/${n}/header.jpg`,
+    `https://cdn.akamai.steamstatic.com/steam/apps/${n}/header.jpg`,
+    `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/header.jpg`,
+    `https://cdn.cloudflare.steamstatic.com/steam/apps/${n}/capsule_616x353.jpg`,
+    `https://cdn.akamai.steamstatic.com/steam/apps/${n}/capsule_616x353.jpg`
+  ].filter(Boolean);
   const proxied=originals.map(u=>`https://images.weserv.nl/?url=${encodeURIComponent(u)}`);
-  return [...extra,...originals,...proxied].filter((v,i,arr)=>v&&arr.indexOf(v)===i);
+  return [...originals,...proxied].filter((v,i,arr)=>v&&arr.indexOf(v)===i);
 }
 function fallbackPoster(id){return cover(id,'header')}
 async function jsonFetch(url){
@@ -426,15 +421,15 @@ async function exactSearch(term){
 }
 function card(a,n){
  const id=a.steam_app_id,d=detail(id),si=scoreInfo(a),saved=S.wish.includes(id);
- const primary=d?.capsule_image||d?.header_image||a.tiny_image||cover(id,'poster');
- const fallbacks=imageFallbacks(id,'poster',[d?.capsule_image,d?.header_image,a.tiny_image]);
+ const primary=d?.header_image||a.tiny_image||`https://cdn.cloudflare.steamstatic.com/steam/apps/${id}/header.jpg`;
+ const fallbacks=imageFallbacks(id,'poster',[d?.header_image,a.tiny_image]);
  const price=d?priceText(d):'Loading price…';
- return `<article class="gamecard" onclick="openGame(${id})">
+ return `<a class="gamecard" data-game-id="${id}" href="#game-${id}" aria-label="Open ${esc(a.name)}">
    <div class="gameposter">
      <img loading="lazy" src="${esc(primary)}" data-fallbacks="${esc(fallbacks.join('|'))}" data-fi="1"
        onerror="imgNext(this)" alt="${esc(a.name)}">
      ${n?`<span class="rank">#${n}</span>`:''}
-     <span class="save ${saved?'saved':''}" onclick="event.stopPropagation();wish(${id})">${ggIcon('star')}</span>
+     <button type="button" class="save ${saved?'saved':''}" data-wish-id="${id}" aria-label="${saved?'Remove from wishlist':'Add to wishlist'}">${ggIcon('star')}</button>
      <div class="posterfade"></div>
    </div>
    <div class="gamecardinfo">
@@ -442,7 +437,7 @@ function card(a,n){
      <div class="gameprice">${price}</div>
      <div class="scoreline">${scoreDot(a)}${si.positive!==null?` · ${si.positive}% Steam positive`:''}${si.meta!==null?` · ${si.meta} Metacritic`:''}</div>
    </div>
- </article>`;
+ </a>`;
 }
 function imgNext(img){
  const list=(img.dataset.fallbacks||'').split('|').filter(Boolean);
@@ -530,22 +525,46 @@ function nav(p){
  S.page=p;S.gameId=null;history.replaceState(null,'',p==='home'?'#home':'#'+p);render();
 }
 function openGame(id){
- id=Number(id); if(!Number.isFinite(id))return;
- if(!S.map.has(id)){toast('Game is still loading. Try again in a moment.');return}
- S.gameId=id;S.page='game';if(!S.viewed.includes(id))S.viewed.push(id);save();history.pushState(null,'',`#game-${id}`);renderGameLoading();loadGame(id).catch(e=>{console.error(e);$('#view').innerHTML=`<section class="gamepage"><button class="btn backbtn" onclick="goBack()">${ggIcon('arrow')} Back to results</button><div class="empty">Could not load this game right now.</div></section>`})
+ id=Number(id);
+ if(!Number.isFinite(id)){toast('Invalid game ID');return}
+ const game=S.map.get(id);
+ if(!game){
+   toast('Game data is still loading. Please try again.');
+   return;
+ }
+ S.gameId=id; S.page='game';
+ if(!S.viewed.includes(id))S.viewed.push(id);
+ save();
+ history.pushState(null,'',`#game-${id}`);
+ renderGameLoading();
+ loadGame(id);
 }
 function renderGameLoading(){document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('on',false));$('#view').innerHTML=`<section class="gamepage"><button class="btn backbtn" onclick="goBack()">${ggIcon('arrow')} Back</button><div class="loadingdetail">Loading game page, ratings, price and Steam reviews…</div></section>`}
 function goBack(){S.page='discover';S.gameId=null;history.replaceState(null,'','#discover');render()}
 async function loadGame(id){
- const a=S.map.get(id);if(!a){goBack();return}
+ const a=S.map.get(Number(id));
+ if(!a){ $('#view').innerHTML=`<section class="gamepage"><button class="btn backbtn" onclick="goBack()">${ggIcon('arrow')} Back to results</button><div class="empty">This game is no longer in the current search results. Search for it again.</div></section>`; return; }
  try{
    const d=await info(id);
-   if(!d)throw Error('Steam details unavailable');
-   const rr=await Promise.allSettled([reviewInfo(id),reviews(id),news(id)]);
-   renderGame(a,d,rr[1]?.status==='fulfilled'?rr[1].value:null,[]);
+   if(d){
+     const rv=await reviewInfo(id);
+     renderGame(a,d,rv,null);
+     return;
+   }
+   // Never leave the user on an infinite loading screen.
+   const basic={
+     name:a.name,
+     header_image:a.tiny_image||cover(id,'header'),
+     genres:a.genres||[],
+     price_overview:null
+   };
+   renderGame(a,basic,null,null);
+   toast('Steam details are temporarily unavailable for this title.');
  }catch(e){
-   console.error(e);
-   $('#view').innerHTML=`<section class="gamepage"><button class="btn backbtn" onclick="goBack()">${ggIcon('arrow')} Back to results</button><div class="empty"><h3>Game details could not be loaded</h3><p>${esc(e.message||'Unknown error')}</p><button class="btn" onclick="loadGame(${id})">Try again</button></div></section>`;
+   console.error('GamerGuy game page:',e);
+   const basic={name:a.name,header_image:a.tiny_image||cover(id,'header'),genres:a.genres||[]};
+   renderGame(a,basic,null,null);
+   toast(e.message||'Steam details unavailable');
  }
 }
 async function refreshRecommendations(){const pool=await buildTastePool();if(S.page==='home')render();return pool}
@@ -672,11 +691,40 @@ async function notifyPermission(){if(!('Notification'in window)){toast('Browser 
 async function check(){if(!Object.keys(S.watch).length)return;for(const id of Object.keys(S.watch)){const d=await info(+id),w=S.watch[id];if(!d)continue;const now=d.price_overview?.discount_percent||0;if(S.prefs.notifySale&&w.sale!==null&&now>w.sale&&Notification.permission==='granted')new Notification(d.name,{body:`Now ${now}% off on Steam.`});w.sale=now;const ns=await news(+id),newest=ns[0]?.gid||null;if(S.prefs.notifyUpdate&&w.lastNews&&newest&&newest!==w.lastNews&&Notification.permission==='granted')new Notification(d.name,{body:'New Steam update/news activity detected.'});if(newest)w.lastNews=newest}save()}
 let searchTimer;
 $('#q')?.addEventListener('input',e=>{S.q=e.target.value.trim();clearTimeout(searchTimer);searchTimer=setTimeout(()=>S.q?ensureSearch():render(),250)});
+document.addEventListener('click',e=>{
+ const wishBtn=e.target.closest('[data-wish-id]');
+ if(wishBtn){
+   e.preventDefault(); e.stopPropagation();
+   wish(Number(wishBtn.dataset.wishId));
+ }
+});
+document.addEventListener('keydown',e=>{
+ const game=e.target.closest?.('[data-game-id]');
+ if(game && (e.key==='Enter'||e.key===' ')){
+   e.preventDefault();
+   openGame(Number(game.dataset.gameId));
+ }
+});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-page]');if(b){e.preventDefault();nav(b.dataset.page)}});
 if($('#bell')) $('#bell').onclick=()=>nav('alerts'); if($('#my')) $('#my').onclick=()=>nav('lists');
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#q')?.focus()}});
 $('#x')?.addEventListener('click',goBack);
 $('#mx')?.addEventListener('click',()=>$('#modal').classList.remove('show'));
+function routeHash(){
+ const hash=location.hash;
+ if(hash.startsWith('#game-')){
+   const id=Number(hash.slice(6));
+   if(Number.isFinite(id)){
+     S.page='game';S.gameId=id;renderGameLoading();loadGame(id);
+     return;
+   }
+ }
+ const p=hash.slice(1)||'home';
+ S.page=['home','discover','lists','wishlist','alerts','settings'].includes(p)?p:'home';
+ S.gameId=null;
+ render();
+}
+window.addEventListener('hashchange',routeHash);
 window.addEventListener('popstate',()=>{if(location.hash.startsWith('#game-')){S.page='game';S.gameId=Number(location.hash.slice(6));renderGameLoading();loadGame(S.gameId)}else{S.page=(location.hash.slice(1)||'home');if(!['home','discover','lists','wishlist','alerts','settings'].includes(S.page))S.page='home';render()}});
 window.refreshRecommendations=refreshRecommendations;window.nav=nav;window.focusQ=focusQ;window.loadMore=loadMore;window.clearSearch=clearSearch;window.clearFilters=clearFilters;window.toggleGenre=toggleGenre;window.openGame=openGame;window.goBack=goBack;window.wish=wish;window.toggleWatch=toggleWatch;window.hideGame=hideGame;window.markOwned=markOwned;window.rate=rate;window.setPref=setPref;window.setRegion=setRegion;window.togglePrefGenre=togglePrefGenre;window.resetTaste=resetTaste;window.clearHistory=clearHistory;window.newList=newList;window.add=add;window.notifyPermission=notifyPermission;
 
@@ -686,5 +734,5 @@ async function bootGamerGuy(){
  catch(e){ console.error('Steam catalog load failed',e); const st=$('#status'); if(st) st.textContent='Steam temporarily unavailable'; toast('Steam is temporarily unavailable. You can still use saved games and settings.'); }
 }
 
-bootGamerGuy(); setInterval(()=>{try{check()}catch(e){console.warn(e)}},15*60*1000);
+bootGamerGuy().then(()=>{if(location.hash.startsWith('#game-'))routeHash()}); setInterval(()=>{try{check()}catch(e){console.warn(e)}},15*60*1000);
 </script></body></html>
