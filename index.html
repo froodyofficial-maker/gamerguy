@@ -184,8 +184,32 @@ function save(){
 }
 function toast(t){const e=$('#toast');if(!e)return;e.textContent=t;e.classList.add('show');clearTimeout(window.ggToast);window.ggToast=setTimeout(()=>e.classList.remove('show'),2600)}
 function cover(id,type='poster'){
- const root=`https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${id}/`;
- return type==='poster'?root+'library_600x900_2x.jpg':root+'header.jpg';
+  const n=encodeURIComponent(id);
+  const variants=type==='poster'
+    ? [
+      `https://cdn.akamai.steamstatic.com/steam/apps/${n}/library_600x900_2x.jpg`,
+      `https://cdn.akamai.steamstatic.com/steam/apps/${n}/capsule_616x353.jpg`,
+      `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/header.jpg`
+    ]
+    : [
+      `https://cdn.akamai.steamstatic.com/steam/apps/${n}/header.jpg`,
+      `https://steamcdn-a.akamaihd.net/steam/apps/${n}/header.jpg`,
+      `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/header.jpg`
+    ];
+  return variants[0];
+}
+function imageFallbacks(id,type='poster'){
+  const n=encodeURIComponent(id);
+  return type==='poster'
+    ? [
+      `https://cdn.akamai.steamstatic.com/steam/apps/${n}/capsule_616x353.jpg`,
+      `https://steamcdn-a.akamaihd.net/steam/apps/${n}/header.jpg`,
+      `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/header.jpg`
+    ]
+    : [
+      `https://steamcdn-a.akamaihd.net/steam/apps/${n}/header.jpg`,
+      `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/header.jpg`
+    ];
 }
 function fallbackPoster(id){return cover(id,'header')}
 async function jsonFetch(url){
@@ -253,9 +277,11 @@ function inferredSignals(a,d){
 }
 function ggGenres(a){const d=detail(a.steam_app_id);return [...new Set(inferredSignals(a,d).concat(a.genres||[]))]}
 function tasteMatch(a){
- const gs=ggGenres(a).map(x=>x.toLowerCase()),preferred=S.prefs.preferredGenres||[],avoids=S.prefs.avoidGenres||[];
+ const gs=ggGenres(a).map(x=>x.toLowerCase());
+ const preferred=S.prefs.preferredGenres||[],avoids=S.prefs.avoidGenres||[];
  if(avoids.some(g=>gs.includes(g.toLowerCase())))return false;
- return !preferred.length||preferred.some(g=>gs.includes(g.toLowerCase()));
+ if(!preferred.length)return true;
+ return preferred.some(g=>gs.includes(g.toLowerCase()));
 }
 function reviewStats(d,id){
   const live=S.reviews.get(id);
@@ -309,6 +335,63 @@ function ggMatches(a){
 }
 function ggScore(a){const x=scoreInfo(a);let n=x.score??50,gs=ggGenres(a).map(g=>g.toLowerCase());n+=(S.prefs.preferredGenres||[]).reduce((v,g)=>v+(gs.includes(g.toLowerCase())?18:0),0);if(S.prefs.preferSingle&&gs.includes('single-player'))n+=8;if(S.prefs.preferIndie&&gs.includes('indie'))n+=8;if(S.owned.has(a.steam_app_id)||S.hidden.has(a.steam_app_id))n=-999;return n+(a.name.length%3)}
 function ggTop(pool){return [...pool].filter(tasteMatch).sort((a,b)=>ggScore(b)-ggScore(a)).slice(0,10)}
+async function buildTastePool(){
+  const preferred=[...(S.prefs.preferredGenres||[])];
+  const avoided=[...(S.prefs.avoidGenres||[])].map(x=>x.toLowerCase());
+  let pool=[];
+
+  if(preferred.length){
+    const batches=await Promise.all(preferred.slice(0,6).map(g=>storeSearch(g)));
+    const seen=new Set();
+    for(const rows of batches){
+      for(const a of rows){
+        if(!seen.has(a.steam_app_id)){seen.add(a.steam_app_id);pool.push(a)}
+      }
+    }
+    for(const a of pool)S.map.set(a.steam_app_id,a);
+    await hydrate(pool.slice(0,80).map(a=>a.steam_app_id));
+  }else{
+    // Use recently viewed games as the taste signal when no explicit genres are chosen.
+    const viewed=S.viewed.slice(-12).map(id=>S.map.get(id)).filter(Boolean);
+    const genreCounts={};
+    for(const a of viewed){
+      for(const g of ggGenres(a))genreCounts[g]=(genreCounts[g]||0)+1;
+    }
+    const inferred=Object.entries(genreCounts).sort((a,b)=>b[1]-a[1]).slice(0,4).map(x=>x[0]);
+    if(inferred.length){
+      const batches=await Promise.all(inferred.map(g=>storeSearch(g)));
+      const seen=new Set();
+      for(const rows of batches)for(const a of rows)if(!seen.has(a.steam_app_id)){seen.add(a.steam_app_id);pool.push(a)}
+      for(const a of pool)S.map.set(a.steam_app_id,a);
+      await hydrate(pool.slice(0,80).map(a=>a.steam_app_id));
+    }else{
+      pool=S.apps.slice(0,300);
+    }
+  }
+
+  pool=pool.filter(a=>{
+    const id=a.steam_app_id;
+    if(S.hidden.has(id)||S.owned.has(id))return false;
+    const gs=ggGenres(a).map(x=>x.toLowerCase());
+    if(avoided.some(g=>gs.includes(g)))return false;
+    if(S.prefs.minScore>0){
+      const d=detail(id);
+      if((Number(d?.metacritic?.score)||0)<S.prefs.minScore)return false;
+    }
+    if(S.prefs.hideBad){
+      const r=reviewStats(detail(id),id);
+      if(r.positive!==null&&r.positive<S.prefs.minSteamPositive)return false;
+    }
+    return true;
+  });
+
+  return pool.sort((a,b)=>{
+    const as=ggScore(b)-ggScore(a);
+    if(as)return as;
+    return (b._searchScore||0)-(a._searchScore||0);
+  }).slice(0,60);
+}
+
 function searchRank(name,term){
   const a=String(name||'').toLowerCase().trim(), b=String(term||'').toLowerCase().trim();
   if(a===b)return 1000;
@@ -318,40 +401,55 @@ function searchRank(name,term){
   return words.reduce((n,w)=>n+(a.includes(w)?40:0),0)-Math.min(30,Math.abs(a.length-b.length));
 }
 async function storeSearch(term){
+  const u=`https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(term)}&cc=${encodeURIComponent(cc())}&l=english&ignore_preferences=1`;
   try{
-    const u=`https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(term)}&cc=${encodeURIComponent(cc())}&l=english&ignore_preferences=1`;
     const j=await jsonFetch(u);
-    return (j?.items||[])
-      .filter(x=>x.type==='app'&&x.id)
+    return (j?.items||[]).filter(x=>x.type==='app'&&x.id)
       .map(x=>({steam_app_id:Number(x.id),name:x.name||'',tiny_image:x.tiny_image||'',genres:[],_searchScore:searchRank(x.name,term)}))
       .sort((a,b)=>b._searchScore-a._searchScore);
-  }catch(e){console.warn('Steam store search failed',term,e);return []}
+  }catch(e){
+    const q=String(term).toLowerCase();
+    return S.apps.filter(a=>String(a.name||'').toLowerCase().includes(q))
+      .sort((a,b)=>searchRank(b.name,term)-searchRank(a.name,term));
+  }
 }
 async function exactSearch(term){
   const rows=await storeSearch(term);
   const q=term.toLowerCase().trim();
   return rows.sort((a,b)=>{
-    const ae=a.name.toLowerCase()===q, be=b.name.toLowerCase()===q;
+    const an=a.name.toLowerCase(),bn=b.name.toLowerCase();
+    const ae=an===q,be=bn===q;
     if(ae!==be)return ae?-1:1;
-    return b._searchScore-a._searchScore;
-  });
+    const ap=an.startsWith(q),bp=bn.startsWith(q);
+    if(ap!==bp)return ap?-1:1;
+    return (b._searchScore||0)-(a._searchScore||0);
+  }).slice(0,50);
 }
 function card(a,n){
  const id=a.steam_app_id,d=detail(id),si=scoreInfo(a),saved=S.wish.includes(id);
- const img=cover(id);
+ const fallbacks=imageFallbacks(id,'poster').join('|');
+ const img=cover(id,'poster');
+ const price=d?priceText(d):'Price unavailable';
  return `<article class="gamecard" onclick="openGame(${id})">
    <div class="gameposter">
-     <img loading="lazy" src="${img}" data-fallback="${fallbackPoster(id)}" onerror="this.onerror=null;this.src=this.dataset.fallback">
+     <img loading="lazy" src="${img}" data-fallbacks="${esc(fallbacks)}" data-fi="0"
+       onerror="imgNext(this)">
      ${n?`<span class="rank">#${n}</span>`:''}
      ${saved?`<span class="save saved" onclick="event.stopPropagation();wish(${id})">${ggIcon('star')}</span>`:''}
      <div class="posterfade"></div>
    </div>
    <div class="gamecardinfo">
      <div class="gametitle">${esc(a.name)}</div>
-     <div class="gameprice">${priceText(d)}</div>
-     <div class="recnote">${esc(recommendationReason(a))}</div><div class="scoreline">${scoreDot(a)}${si.positive!==null?` · ${si.positive}% Steam positive`:''}</div>
+     <div class="gameprice">${price}</div>
+     <div class="scoreline">${scoreDot(a)}${si.positive!==null?` · ${si.positive}% Steam positive`:''}${si.meta!==null?` · ${si.meta} Metacritic`:''}</div>
    </div>
  </article>`;
+}
+function imgNext(img){
+ const list=(img.dataset.fallbacks||'').split('|').filter(Boolean);
+ const i=Number(img.dataset.fi||0);
+ if(i<list.length){img.dataset.fi=String(i+1);img.src=list[i];}
+ else{img.removeAttribute('onerror');img.style.visibility='hidden';}
 }
 async function hydrate(ids){
  const unique=[...new Set(ids)];
@@ -394,25 +492,18 @@ async function ensureSearch(){
   if(S.selectedGenres.length)await ensureGenres();
   else render();
 }
-async function ensureGenres(){if(!S.selectedGenres.length)return;S.filterBusy=true;render();const rows=(await Promise.all(S.selectedGenres.slice(0,5).map(storeSearch))).flat();for(const a of rows){if(!S.map.has(a.steam_app_id)){S.map.set(a.steam_app_id,a);S.apps.push(a)}}let candidates=S.apps.filter(a=>!S.hidden.has(a.steam_app_id)&&(!S.q||a.name.toLowerCase().includes(S.q.toLowerCase())));await hydrate(candidates.slice(0,100).map(a=>a.steam_app_id));S.filterBusy=false;render()}
-function loadMore(){if(S.more)load().then(()=>S.selectedGenres.length&&ensureGenres());else toast('All currently available catalog pages are loaded.')}
-function nav(p){S.page=p;S.gameId=null;history.replaceState(null,'',p==='home'?'#home':'#'+p);render()}
-function openGame(id){if(!S.map.has(id))return;S.gameId=id;S.page='game';if(!S.viewed.includes(id))S.viewed.push(id);save();history.pushState(null,'',`#game-${id}`);renderGameLoading();loadGame(id)}
-function renderGameLoading(){document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('on',false));$('#view').innerHTML=`<section class="gamepage"><button class="btn backbtn" onclick="goBack()">${ggIcon('arrow')} Back</button><div class="loadingdetail">Loading game page, ratings, price and Steam reviews…</div></section>`}
-function goBack(){S.page='discover';S.gameId=null;history.replaceState(null,'','#discover');render()}
-async function loadGame(id){
-  const a=S.map.get(id);
-  if(!a){
-    goBack();
-    return;
-  }
-  const d=await info(id);
-  if(!d){
-    $('#view').innerHTML=`<section class="gamepage"><button class="btn backbtn" onclick="goBack()">${ggIcon('arrow')} Back to results</button><div class="empty">Steam details could not be reached right now. Refresh and try again.</div></section>`;
-    return;
-  }
-  await Promise.allSettled([reviewInfo(id),news(id)]);
-  renderGame(a,d,S.reviews.get(id)||null,[]);
+async function ensureGenres(){
+ if(!S.selectedGenres.length)return;
+ S.filterBusy=true;render();
+ const rows=(await Promise.all(S.selectedGenres.slice(0,5).map(storeSearch))).flat();
+ const seen=new Set();
+ for(const a of rows){
+   if(seen.has(a.steam_app_id))continue;
+   seen.add(a.steam_app_id);
+   if(!S.map.has(a.steam_app_id)){S.map.set(a.steam_app_id,a);S.apps.push(a)}
+ }
+ await hydrate([...seen].slice(0,120));
+ S.filterBusy=false;render();
 }
 async function reviewInfo(id){
  if(S.reviews.has(id))return S.reviews.get(id);
@@ -440,20 +531,20 @@ function renderGame(a,d,rv,nw){
  const verdict=x.score===null?'Not enough public review data is available to make a defensible score yet.':`${t[1]}. The ${x.score}/100 score is based mainly on Steam player sentiment${x.positive!==null?` (${x.positive}% positive)`:''}${x.meta!==null?` and Metacritic (${x.meta})`:''}, with review volume used as a confidence signal.`;
  $('#view').innerHTML=`<section class="gamepage"><button class="btn backbtn" onclick="goBack()">${ggIcon('arrow')} Back to results</button><div class="gamepagehero"><img src="${esc(d.header_image||fallbackPoster(a.steam_app_id))}" alt="${esc(d.name)}"></div><div class="gamepagehead"><div class="scorebadge"><span class="score-dot dot-${t[0]}"></span>${x.score===null?'Score pending':`GamerGuy ${x.score}/100`} <span class="scorelabel">${esc(t[1])}</span></div><h1>${esc(d.name)}</h1><div class="muted">${esc((d.developers||[]).join(', '))}${d.release_date?.date?' · '+esc(d.release_date.date):''}</div><div class="genrechips">${genres.map(g=>`<span class="genrechip">${esc(g)}</span>`).join('')}</div></div><div class="detailgrid"><div class="detailpanel"><h2>Game overview</h2><p class="longdesc">${esc(longDesc)}</p><div class="metricgrid"><div class="metric"><b>${priceText(d)}</b><small>${sale?`${d.price_overview.discount_percent}% off on Steam`:'Current Steam price'}</small></div><div class="metric"><b>${x.positive!==null?x.positive+'%':'—'}</b><small>Steam positive</small></div><div class="metric"><b>${x.meta??'—'}</b><small>Metacritic</small></div><div class="metric"><b>${d.demos?.length?'Yes':'No'}</b><small>Demo</small></div></div>${x.positive!==null?`<div class="reviewbar"><span style="width:${x.positive}%"></span></div><div class="reviewcount">${esc(summary?.review_score_desc||'Steam review sentiment')} · ${Number(summary?.total||x.recs||0).toLocaleString()} Steam reviews</div>`:''}</div><aside class="detailpanel"><h2>Your options</h2><div class="optionstack"><button class="btn ${S.wish.includes(a.steam_app_id)?'green':''}" onclick="wish(${a.steam_app_id})">${ggIcon('star')} ${S.wish.includes(a.steam_app_id)?'Wishlisted':'Add to wishlist'}</button><button class="btn ${watched?'green':''}" onclick="toggleWatch(${a.steam_app_id})">${ggIcon('bell')} ${watched?'Watching alerts':'Watch this game'}</button><button class="btn ${owned?'green':''}" onclick="markOwned(${a.steam_app_id})">${ggIcon('check')} ${owned?'Owned':'I already own this'}</button><button class="btn" onclick="hideGame(${a.steam_app_id})">${ggIcon('eyeoff')} Never show again</button><a class="btn primary" target="_blank" rel="noopener" href="https://store.steampowered.com/app/${a.steam_app_id}/">Open on Steam</a></div><div class="personalrate"><h3>Your rating</h3><div class="stars">${[1,2,3,4,5].map(n=>`<button class="rate ${rating>=n?'on':''}" onclick="rate(${a.steam_app_id},${n})">${ggIcon('star')}</button>`).join('')}</div></div></aside></div>${shots.length?`<div class="detailpanel" style="margin-top:16px"><h2>More screenshots</h2><div class="gamegallery">${shots.map(s=>`<a href="${esc(s.path_full||s.path_thumbnail)}" target="_blank" rel="noopener"><img loading="lazy" src="${esc(s.path_thumbnail||s.path_full)}" alt="${esc(d.name)} screenshot"></a>`).join('')}</div></div>`:''}<div class="detailpanel" style="margin-top:16px"><h2>Why GamerGuy gave this score</h2><div class="verdictbox"><h3>${esc(t[1])}</h3><p class="muted">${esc(verdict)}</p></div><div class="analysisgrid" style="margin-top:12px">${an.factors.map((f,i)=>`<div class="analysiscard"><b>${['Player reception','Critic reception','Confidence','Game context','Try before buy'][i]||'Analysis'}</b><span>${esc(f)}</span></div>`).join('')}</div></div><div class="detailpanel" style="margin-top:16px"><h2>Steam reviews</h2>${rv?.reviews?.length?rv.reviews.map(r=>`<article class="review"><div class="reviewtop"><b>${r.voted_up?'Positive':'Negative'}</b><span>${new Date((r.timestamp_created||0)*1000).toLocaleDateString()}</span></div><p>${esc((r.review||'').slice(0,700))}${(r.review||'').length>700?'…':''}</p></article>`).join(''):'<div class="empty">Steam review text is temporarily unavailable.</div>'}</div></section>`;
 }
-function home(){const recent=S.viewed.map(id=>S.map.get(id)).filter(a=>a&&!S.hidden.has(a.steam_app_id)).slice(-6).reverse();const fallback=S.apps.filter(a=>!S.hidden.has(a.steam_app_id)&&!S.owned.has(a.steam_app_id)&&tasteMatch(a));const rec=ggTop(fallback).slice(0,10);if(!window.ggRecBusy){window.ggRecBusy=true;setTimeout(async()=>{try{await refreshRecommendations()}finally{window.ggRecBusy=false}},30)}setTimeout(()=>hydrate([...rec,...recent].map(a=>a.steam_app_id)),20);return `<section class="hero"><div class="eyebrow">GAMER DISCOVERY</div><h1>Find games that fit.</h1><p>Search Steam, combine genres, tune your taste, and get recommendations based on what you actually like.</p><div class="actions"><button class="btn primary" onclick="focusQ()">${ggIcon('search')} Search Steam</button><button class="btn" onclick="nav('discover')">${ggIcon('discover')} Discover</button></div></section><section class="section"><div class="head"><div><h2>Top 10 for you</h2><p>${S.prefs.preferredGenres.length?`Tailored to: ${esc(S.prefs.preferredGenres.join(', '))}`:'Based on your browsing and saved taste'}</p></div></div><div class="grid">${rec.map((a,i)=>card(a,i+1)).join('')||'<div class="tasteempty">Pick preferred genres in Settings and GamerGuy will build a tailored recommendation pool.</div>'}</div></section>${recent.length?`<section class="section"><div class="head"><div><h2>Recently viewed</h2></div></div><div class="grid">${recent.map(a=>card(a)).join('')}</div></section>`:''}`;}
-async function refreshRecommendations(){const pool=await buildTastePool();if(S.page==='home')render();return pool}
-function discover(){
- const pool=S.apps.filter(ggMatches),top=ggTop(pool);
- setTimeout(()=>hydrate(pool.slice(0,30).map(a=>a.steam_app_id)),20);
- return `<section><div class="head compact"><div><h2>Discover</h2><p>${S.q?`Results for “${esc(S.q)}”`:'Search the Steam catalog'}</p></div><button class="btn" onclick="loadMore()">${S.loading?'Loading…':S.more?'Load more':'Catalog loaded'}</button></div>
- <div class="searchtools"><div class="queryline">${S.q?`<span class="querypill">${esc(S.q)} <button onclick="clearSearch()">${ggIcon('close')}</button></span>`:'Use filters to narrow the catalog.'}</div>
- <div class="filterbar"><div><b>Genres</b><span class="filterhint">Multiple allowed</span></div><button class="btn" onclick="clearFilters()">Clear</button></div>
- <div class="chips">${['Horror','Survival Horror','Indie','Action','Adventure','RPG','Strategy','Simulation','Racing','Co-op','Multiplayer','Single-player','Story Rich','Psychological Horror','Survival'].map(g=>`<button class="chip ${S.selectedGenres.includes(g)?'on':''}" onclick="toggleGenre('${g}')">${g}</button>`).join('')}</div>
- <div class="filterrow"><input id="discMax" type="number" min="0" placeholder="Max price" value="${S.prefs.maxPrice>=100?'':S.prefs.maxPrice}" onchange="setPref('maxPrice',this.value===''?100:Number(this.value))"><label class="freecheck"><input type="checkbox" ${S.prefs.freeOnly?'checked':''} onchange="setPref('freeOnly',this.checked)"> Free to play only</label></div>
- </div>${S.filterBusy?'<div class="empty">Checking Steam genre data…</div>':''}
- <section class="section top10box"><div class="head"><div><h3>Top 10 matching your filters</h3><p>Games matching every selected genre.</p></div></div><div class="grid">${top.map((a,i)=>card(a,i+1)).join('')||'<div class="empty noresults">No matches loaded yet. Search a game or load more.</div>'}</div></section>
- <div class="bar"><span>${pool.length.toLocaleString()} matching loaded${S.more?' · more available':''}</span><button class="btn" onclick="loadMore()">${S.more?'Load more games':'All loaded'}</button></div>
- <div class="grid">${pool.slice(0,100).map(a=>card(a)).join('')||'<div class="empty noresults">No matching games.</div>'}</div></section>`;
+function home(){
+ const recent=S.viewed.map(id=>S.map.get(id)).filter(a=>a&&!S.hidden.has(a.steam_app_id)).slice(-6).reverse();
+ const fallback=S.apps.filter(a=>!S.hidden.has(a.steam_app_id)&&!S.owned.has(a.steam_app_id)&&tasteMatch(a));
+ const rec=ggTop(fallback).slice(0,10);
+ if(!window.ggRecBusy){
+   window.ggRecBusy=true;
+   setTimeout(async()=>{
+     try{await refreshRecommendations()}
+     catch(e){console.warn('Recommendation build failed',e)}
+     finally{window.ggRecBusy=false}
+   },30);
+ }
+ setTimeout(()=>hydrate([...rec,...recent].map(a=>a.steam_app_id)),20);
+ return `<section class="hero"><div class="eyebrow">GAMER DISCOVERY</div><h1>Find games that fit.</h1><p>Search Steam, combine genres, tune your taste, and get recommendations based on what you actually like.</p><div class="actions"><button class="btn primary" onclick="focusQ()">${ggIcon('search')} Search Steam</button><button class="btn" onclick="nav('discover')">${ggIcon('discover')} Discover</button></div></section><section class="section"><div class="head"><div><h2>Top 10 for you</h2><p>${S.prefs.preferredGenres.length?`Tailored to: ${esc(S.prefs.preferredGenres.join(', '))}`:'Based on your browsing and saved taste'}</p></div></div><div class="grid">${rec.map((a,i)=>card(a,i+1)).join('')||'<div class="tasteempty">Choose preferred genres in Settings to build recommendations.</div>'}</div></section>${recent.length?`<section class="section"><div class="head"><div><h2>Recently viewed</h2></div></div><div class="grid">${recent.map(a=>card(a)).join('')}</div></section>`:''}`;
 }
 function wishlist(){const g=S.wish.map(id=>S.map.get(id)).filter(a=>a&&!S.hidden.has(a.steam_app_id));setTimeout(()=>hydrate(g.map(a=>a.steam_app_id)),20);return `<section><div class="head"><div><h2>Wishlist</h2><p>Starred games follow your notification settings.</p></div></div>${g.length?`<div class="grid">${g.map(a=>card(a)).join('')}</div>`:'<div class="empty">Your wishlist is empty.</div>'}</section>`}
 function lists(){return `<section><div class="head"><div><h2>My Lists</h2><p>Personal collections.</p></div><button class="btn primary" onclick="newList()">${ggIcon('plus')} New list</button></div>${Object.entries(S.lists).map(([n,ids])=>{const g=ids.map(id=>S.map.get(id)).filter(Boolean);setTimeout(()=>hydrate(g.map(a=>a.steam_app_id)),20);return `<section class="section"><div class="head"><div><h2>${esc(n)}</h2><p>${g.length} games</p></div></div><div class="grid">${g.map(a=>card(a)).join('')||'<div class="empty">Empty list.</div>'}</div></section>`}).join('')||'<div class="empty">Create a list and start collecting games.</div>'}</section>`}
