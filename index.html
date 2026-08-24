@@ -147,11 +147,10 @@
   window.addEventListener('unhandledrejection',e=>showBootError(e.reason?.message||String(e.reason||'Unhandled promise rejection')));
 })();
 const EDGE='https://hlcajwtmwgrfolaokmbn.supabase.co/functions/v1/super-processor';
-const STORE='https://store.steampowered.com/api/appdetails';
-const REVIEWS='https://store.steampowered.com/appreviews/';
+const STORE='server://appdetails';
+const REVIEWS='server://appreviews';
 const NEWS='https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/';
-const PROXY=u=>'https://corsproxy.io/?url='+encodeURIComponent(u);
-const ALT_PROXY=u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u);
+const STORE_SEARCH='server://storesearch';
 
 const ICONS={
 search:'<circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5 5"/>',
@@ -208,55 +207,36 @@ function save(){
 function toast(t){const e=$('#toast');if(!e)return;e.textContent=t;e.classList.add('show');clearTimeout(window.ggToast);window.ggToast=setTimeout(()=>e.classList.remove('show'),2600)}
 function cover(id,type='poster'){
   const n=encodeURIComponent(id);
-  const variants=type==='poster'
-    ? [
-      `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/library_600x900_2x.jpg`,
-      `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/capsule_616x353.jpg`,
-      `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/header.jpg`
-    ]
-    : [
-      `https://cdn.akamai.steamstatic.com/steam/apps/${n}/header.jpg`,
-      `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/header.jpg`,
-      `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/header.jpg`
-    ];
-  return variants[0];
+  return type==='poster'
+    ? `https://cdn.akamai.steamstatic.com/steam/apps/${n}/capsule_616x353.jpg`
+    : `https://cdn.akamai.steamstatic.com/steam/apps/${n}/header.jpg`;
 }
 function imageFallbacks(id,type='poster'){
   const n=encodeURIComponent(id);
   return type==='poster'
     ? [
-      `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/capsule_616x353.jpg`,
+      `https://cdn.akamai.steamstatic.com/steam/apps/${n}/capsule_616x353.jpg`,
+      `https://cdn.cloudflare.steamstatic.com/steam/apps/${n}/capsule_616x353.jpg`,
       `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/header.jpg`,
-      `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/header.jpg`
+      `https://cdn.akamai.steamstatic.com/steam/apps/${n}/header.jpg`
     ]
     : [
-      `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/header.jpg`,
+      `https://cdn.akamai.steamstatic.com/steam/apps/${n}/header.jpg`,
+      `https://cdn.cloudflare.steamstatic.com/steam/apps/${n}/header.jpg`,
       `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${n}/header.jpg`
     ];
 }
 function fallbackPoster(id){return cover(id,'header')}
 async function jsonFetch(url){
-  const routes = [
-    url,
-    `https://r.jina.ai/${url}`,
-    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-    `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
-  ];
-  let last;
-  for(const u of routes){
-    try{
-      const r=await fetch(u,{cache:'no-store',headers:{'Accept':'application/json,text/plain,*/*'}});
-      if(!r.ok)throw Error(`HTTP ${r.status}`);
-      const text=await r.text();
-      try{return JSON.parse(text)}catch{
-        const start=Math.min(...[text.indexOf('{'),text.indexOf('[')].filter(x=>x>=0));
-        if(start>=0)return JSON.parse(text.slice(start));
-        throw Error('Response was not JSON');
-      }
-    }catch(e){last=e}
+  const r=await fetch(url,{cache:'no-store',headers:{'Accept':'application/json'}});
+  const text=await r.text();
+  let d=null;
+  try{d=JSON.parse(text)}catch{
+    const start=Math.min(...[text.indexOf('{'),text.indexOf('[')].filter(x=>x>=0));
+    if(start>=0)d=JSON.parse(text.slice(start));
   }
-  throw last||Error('Request failed');
+  if(!r.ok)throw Error(d?.error||`HTTP ${r.status}`);
+  return d;
 }
 async function edge(action,extra={}){
  const r=await fetch(EDGE,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,last_appid:S.cursor,...extra})});
@@ -268,22 +248,14 @@ function cc(){return S.prefs.region||'IN'}
 async function info(id){
   const key=`${id}:${cc()}`;
   if(S.details.has(key))return S.details.get(key);
-  const urls=[
-    `${STORE}?appids=${id}&l=english&cc=${encodeURIComponent(cc())}`,
-    `${STORE}?appids=${id}&l=english&cc=US`,
-    `${STORE}?appids=${id}&l=english&cc=GB`
-  ];
-  for(const u of urls){
-    try{
-      const j=await jsonFetch(u);
-      const d=j?.[id]?.data;
-      if(d){
-        d.__id=id;
-        S.details.set(key,d);
-        return d;
-      }
-    }catch(e){console.warn('Game detail fetch failed',id,e)}
-  }
+  try{
+    const d=await edge('get_details',{appid:Number(id),cc:cc()});
+    if(d?.data){
+      d.data.__id=Number(id);
+      S.details.set(key,d.data);
+      return d.data;
+    }
+  }catch(e){console.warn('Steam details failed',id,e)}
   return null;
 }
 function detail(id){return S.details.get(`${id}:${cc()}`)}
@@ -424,13 +396,17 @@ function searchRank(name,term){
   return words.reduce((n,w)=>n+(a.includes(w)?40:0),0)-Math.min(30,Math.abs(a.length-b.length));
 }
 async function storeSearch(term){
-  const u=`https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(term)}&cc=${encodeURIComponent(cc())}&l=english&ignore_preferences=1`;
   try{
-    const j=await jsonFetch(u);
-    return (j?.items||[]).filter(x=>x.type==='app'&&x.id)
-      .map(x=>({steam_app_id:Number(x.id),name:x.name||'',tiny_image:x.tiny_image||'',genres:[],_searchScore:searchRank(x.name,term)}))
-      .sort((a,b)=>b._searchScore-a._searchScore);
+    const j=await edge('search',{query:String(term||''),cc:cc()});
+    return (j.results||[]).map(x=>({
+      steam_app_id:Number(x.steam_app_id),
+      name:x.name||'',
+      tiny_image:x.tiny_image||'',
+      genres:x.genres||[],
+      _searchScore:Number(x._searchScore||0)
+    })).sort((a,b)=>b._searchScore-a._searchScore);
   }catch(e){
+    console.warn('Steam search failed',term,e);
     const q=String(term).toLowerCase();
     return S.apps.filter(a=>String(a.name||'').toLowerCase().includes(q))
       .sort((a,b)=>searchRank(b.name,term)-searchRank(a.name,term));
@@ -553,14 +529,23 @@ async function loadGame(id){
 }
 async function refreshRecommendations(){const pool=await buildTastePool();if(S.page==='home')render();return pool}
 async function reviewInfo(id){
- if(S.reviewSummaries.has(id))return S.reviewSummaries.get(id);
- try{const j=await jsonFetch(`${REVIEWS}${id}?json=1&language=english&filter=summary&num_per_page=1&purchase_type=all`);S.reviewSummaries.set(id,j);return j}
- catch{S.reviewSummaries.set(id,null);return null}
+  if(S.reviewSummaries.has(id))return S.reviewSummaries.get(id);
+  try{
+    const j=await edge('get_reviews',{appid:Number(id)});
+    S.reviewSummaries.set(id,j||null);
+    return j||null;
+  }catch{
+    S.reviewSummaries.set(id,null);
+    return null;
+  }
 }
 async function reviews(id){
- if(S.reviewLists.has(id))return S.reviewLists.get(id);
- try{const j=await jsonFetch(`${REVIEWS}${id}?json=1&language=english&filter=recent&num_per_page=5&purchase_type=all`);S.reviewLists.set(id,j||null);return j}
- catch{return S.reviewLists.get(id)||null}
+  if(S.reviewLists.has(id))return S.reviewLists.get(id);
+  try{
+    const j=await edge('get_reviews',{appid:Number(id)});
+    S.reviewLists.set(id,j||null);
+    return j||null;
+  }catch{return S.reviewLists.get(id)||null}
 }
 async function news(id){try{return (await jsonFetch(`${NEWS}?appid=${id}&count=5&maxlength=1`))?.appnews?.newsitems||[]}catch{return []}}
 function cleanHtml(s){const el=document.createElement('div');el.innerHTML=s||'';return (el.textContent||el.innerText||'').replace(/\s+/g,' ').trim()}
