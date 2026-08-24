@@ -598,6 +598,39 @@ function settings(){
  <div class="panel"><h3>Reset</h3><p class="muted">Local settings, owned games, hidden games, ratings and browsing history are stored in this browser.</p><div class="actions"><button class="btn" onclick="resetTaste()">Reset recommendation taste</button><button class="btn" onclick="clearHistory()">Clear browsing history</button></div></div>
  </div></section>`;
 }
+function discover(){
+ const genres=['Horror','Survival Horror','Story Rich','Indie','Action','Adventure','RPG','Co-op','Multiplayer','Single-player','Survival','Strategy','Simulation','Casual'];
+ const visible=S.apps.filter(ggMatches);
+ const sorted=[...visible].sort((a,b)=>{
+   const sb=ggScore(b),sa=ggScore(a);
+   if(sb!==sa)return sb-sa;
+   return (b._searchScore||0)-(a._searchScore||0);
+ });
+ const top=sorted.slice(0,10);
+ const hasQuery=!!S.q;
+ const title=hasQuery?`Results for “${esc(S.q)}”`:(S.selectedGenres.length?`Matching your filters`:'Discover games');
+ const subtitle=S.selectedGenres.length?`Every selected genre must match.`:'Search by title or combine genres to narrow the results.';
+ if(!S.loading && !S.filterBusy && !S.apps.length){
+   setTimeout(()=>{ if(!S.loading && !S.apps.length) load().catch(()=>{}); },50);
+ }
+ if(S.selectedGenres.length && !S.filterBusy && !S._genreHydrated){
+   S._genreHydrated=true;
+   setTimeout(()=>ensureGenres().catch(e=>{console.warn(e);S.filterBusy=false;render()}),40);
+ }
+ setTimeout(()=>hydrate(sorted.slice(0,40).map(a=>a.steam_app_id)).catch(()=>{}),30);
+ return `<section>
+   <div class="head compact"><div><h2>${title}</h2><p>${subtitle}</p></div><div class="status ${!S.loading?'ok':''}"><i></i>${S.loading?'Loading Steam games…':`${visible.length.toLocaleString()} matching`}</div></div>
+   <div class="searchtools">
+     <div class="filterbar"><div><b>Genres</b><span class="filterhint">Select multiple</span></div><div class="actions"><button class="btn" onclick="clearFilters()">Clear</button></div></div>
+     <div class="chips">${genres.map(g=>`<button class="chip ${S.selectedGenres.includes(g)?'on':''}" onclick="toggleGenre('${esc(g)}')">${esc(g)}</button>`).join('')}</div>
+     ${S.selectedGenres.length?`<div class="queryline" style="margin-top:10px">Active: ${S.selectedGenres.map(g=>`<span class="querypill">${esc(g)} <button onclick="toggleGenre('${esc(g)}')">${ggIcon('close')}</button></span>`).join(' ')}</div>`:''}
+   </div>
+   <section class="section"><div class="head"><div><h2>${hasQuery?'Search results':'Top matches'}</h2><p>${S.selectedGenres.length?'Filtered by all selected genres.':'Games ranked by GamerGuy score and relevance.'}</p></div></div>
+   ${S.filterBusy?'<div class="empty">Finding games that match your genres…</div>':top.length?`<div class="grid">${top.map((a,i)=>card(a,i+1)).join('')}</div>`:'<div class="empty">No games match those filters yet. Try removing a genre or searching another title.</div>'}
+   </section>
+   <div class="bar"><span>${S.more?'More Steam games available':'End of the currently loaded catalog'}</span><button class="btn" onclick="loadMore()">${S.loading?'Loading…':'Load more'}</button></div>
+ </section>`;
+}
 function render(){
  if(S.page==='game'){return}
  const html=S.page==='home'?home():S.page==='discover'?discover():S.page==='lists'?lists():S.page==='wishlist'?wishlist():S.page==='alerts'?alerts():settings();
@@ -637,6 +670,11 @@ $('#mx')?.addEventListener('click',()=>$('#modal').classList.remove('show'));
 window.addEventListener('popstate',()=>{if(location.hash.startsWith('#game-')){S.page='game';S.gameId=Number(location.hash.slice(6));renderGameLoading();loadGame(S.gameId)}else{S.page=(location.hash.slice(1)||'home');if(!['home','discover','lists','wishlist','alerts','settings'].includes(S.page))S.page='home';render()}});
 window.refreshRecommendations=refreshRecommendations;window.nav=nav;window.focusQ=focusQ;window.loadMore=loadMore;window.clearSearch=clearSearch;window.clearFilters=clearFilters;window.toggleGenre=toggleGenre;window.openGame=openGame;window.goBack=goBack;window.wish=wish;window.toggleWatch=toggleWatch;window.hideGame=hideGame;window.markOwned=markOwned;window.rate=rate;window.setPref=setPref;window.setRegion=setRegion;window.togglePrefGenre=togglePrefGenre;window.resetTaste=resetTaste;window.clearHistory=clearHistory;window.newList=newList;window.add=add;window.notifyPermission=notifyPermission;
 
-async function bootGamerGuy(){ try{ render(); await load(); }catch(e){ console.error('GamerGuy boot failed',e); const v=$('#view'); if(v) v.innerHTML=`<section class="hero"><div class="eyebrow">GAMERGUY</div><h1>GamerGuy could not start.</h1><p>${esc(e?.message||e)}</p><div class="actions"><button class="btn primary" onclick="localStorage.clear();location.reload()">Reset GamerGuy</button></div></section>`; } }
+async function bootGamerGuy(){
+ try{ render(); }catch(e){ console.error('Initial render failed',e); const v=$('#view'); if(v) v.innerHTML=`<section class="hero"><div class="eyebrow">GAMERGUY</div><h1>GamerGuy could not start.</h1><p>${esc(e?.message||e)}</p><div class="actions"><button class="btn primary" onclick="localStorage.clear();location.reload()">Reset GamerGuy</button></div></section>`; return; }
+ try{ await load(); }
+ catch(e){ console.error('Steam catalog load failed',e); const st=$('#status'); if(st) st.textContent='Steam temporarily unavailable'; toast('Steam is temporarily unavailable. You can still use saved games and settings.'); }
+}
+
 bootGamerGuy(); setInterval(()=>{try{check()}catch(e){console.warn(e)}},15*60*1000);
 </script></body></html>
