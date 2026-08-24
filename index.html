@@ -127,11 +127,25 @@
 <button data-page="alerts"><svg class="ico" viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>Alerts</button>
 <button data-page="settings"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 15.5 21 17l-2 2-2-2M5 8.5 3 7l2-2 2 2M8.5 5 7 3l2-2 2 2M15.5 19 17 21l-2 2-2-2"/></svg>Settings</button>
 </nav><div class="sidefoot"><span id="status">Connecting to Steam…</span><br><br>Recommendations, hidden games, ratings and preferences are stored in this browser.</div></aside>
-<main class="main"><header class="top"><div class="search"><svg class="ico"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5 5"/></svg><input id="q" placeholder="Search every Steam game…"><span class="kbd">CTRL K</span></div><button class="topbtn" id="bell" title="Alerts"><svg class="ico" viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></button><button class="topbtn" id="my" title="My lists"><svg class="ico" viewBox="0 0 24 24"><path d="M5 6h14M5 12h14M5 18h14"/></svg></button></header><div class="wrap" id="view"></div></main></div>
+<main class="main"><header class="top"><div class="search"><svg class="ico"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5 5"/></svg><input id="q" placeholder="Search every Steam game…"><span class="kbd">CTRL K</span></div><button class="topbtn" id="bell" title="Alerts"><svg class="ico" viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></button><button class="topbtn" id="my" title="My lists"><svg class="ico" viewBox="0 0 24 24"><path d="M5 6h14M5 12h14M5 18h14"/></svg></button></header><div class="wrap" id="view"><section class="hero"><div class="eyebrow">GAMER DISCOVERY</div><h1>Find games that fit.</h1><p>Loading GamerGuy…</p><div class="actions"><button class="btn primary" type="button">Search Steam</button><button class="btn" type="button">Discover</button></div></section></div></main></div>
 <nav class="mobile"><button data-page="home">Home</button><button data-page="discover"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="m15 9-2 4-4 2 2-4z"/></svg>Discover</button><button data-page="lists">Lists</button><button data-page="wishlist"><svg class="ico" viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9z"/></svg>Wishlist</button><button data-page="settings"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 15.5 21 17l-2 2-2-2M5 8.5 3 7l2-2 2 2M8.5 5 7 3l2-2 2 2M15.5 19 17 21l-2 2-2-2"/></svg>Settings</button></nav>
 <div class="overlay" id="overlay"><div class="drawer"><button class="topbtn close" id="x">Close</button><div id="detail"></div></div></div>
 <div class="modal" id="modal"><div class="box"><div style="display:flex;justify-content:space-between"><h2 style="margin:0">Save game</h2><button class="topbtn" id="mx">Close</button></div><p class="muted">Choose a list or create one.</p><div id="choices"></div><button class="btn primary" style="margin-top:12px" id="new">Create new list</button></div></div><div class="toast" id="toast"></div>
 <script>
+/* GamerGuy v10 boot safety: never leave a blank screen if browser state or a later script fails. */
+(function(){
+  const showBootError=(msg)=>{
+    try{
+      const v=document.getElementById('view');
+      if(v && !v.dataset.ggBootError){
+        v.dataset.ggBootError='1';
+        v.innerHTML=`<section class="hero"><div class="eyebrow">GAMERGUY</div><h1>GamerGuy hit a startup error.</h1><p style="max-width:760px">${String(msg||'Unknown error').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]))}</p><div class="actions"><button class="btn primary" onclick="try{localStorage.clear();location.reload()}catch(e){location.reload()}">Reset GamerGuy</button></div></section>`;
+      }
+    }catch(e){}
+  };
+  window.addEventListener('error',e=>{ if(e && e.error) showBootError(e.error.message||e.message); });
+  window.addEventListener('unhandledrejection',e=>showBootError(e.reason?.message||String(e.reason||'Unhandled promise rejection')));
+})();
 const EDGE='https://hlcajwtmwgrfolaokmbn.supabase.co/functions/v1/super-processor';
 const STORE='https://store.steampowered.com/api/appdetails';
 const REVIEWS='https://store.steampowered.com/appreviews/';
@@ -171,6 +185,15 @@ const S={
  region:'IN',currency:'INR'
  },read('ggPrefs',{}))
 };
+/* Normalize old localStorage from previous GamerGuy versions. */
+(function normalizeState(){
+  const arrKeys=['viewed','wish','selectedGenres'];
+  for(const k of arrKeys) if(!Array.isArray(S[k])) S[k]=[];
+  for(const k of ['preferredGenres','avoidGenres']) if(!Array.isArray(S.prefs[k])) S.prefs[k]=[];
+  for(const k of ['maxPrice','minScore','minSteamPositive']){ const n=Number(S.prefs[k]); S.prefs[k]=Number.isFinite(n)?n:0; }
+  for(const k of ['hideBad','preferSingle','preferIndie','avoidEarly','freeOnly','notifySale','notifyUpdate','autoWatchSale','autoWatchUpdate']) S.prefs[k]=S.prefs[k]===true;
+  if(!S.prefs.region) S.prefs.region='IN';
+})();
 function save(){
  localStorage.ggViewed=JSON.stringify(S.viewed.slice(-100));
  localStorage.ggWish=JSON.stringify(S.wish);
@@ -607,12 +630,13 @@ async function check(){if(!Object.keys(S.watch).length)return;for(const id of Ob
 let searchTimer;
 $('#q')?.addEventListener('input',e=>{S.q=e.target.value.trim();clearTimeout(searchTimer);searchTimer=setTimeout(()=>S.q?ensureSearch():render(),250)});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-page]');if(b){e.preventDefault();nav(b.dataset.page)}});
-$('#bell').onclick=()=>nav('alerts');$('#my').onclick=()=>nav('lists');
+if($('#bell')) $('#bell').onclick=()=>nav('alerts'); if($('#my')) $('#my').onclick=()=>nav('lists');
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#q')?.focus()}});
 $('#x')?.addEventListener('click',goBack);
 $('#mx')?.addEventListener('click',()=>$('#modal').classList.remove('show'));
 window.addEventListener('popstate',()=>{if(location.hash.startsWith('#game-')){S.page='game';S.gameId=Number(location.hash.slice(6));renderGameLoading();loadGame(S.gameId)}else{S.page=(location.hash.slice(1)||'home');if(!['home','discover','lists','wishlist','alerts','settings'].includes(S.page))S.page='home';render()}});
 window.refreshRecommendations=refreshRecommendations;window.nav=nav;window.focusQ=focusQ;window.loadMore=loadMore;window.clearSearch=clearSearch;window.clearFilters=clearFilters;window.toggleGenre=toggleGenre;window.openGame=openGame;window.goBack=goBack;window.wish=wish;window.toggleWatch=toggleWatch;window.hideGame=hideGame;window.markOwned=markOwned;window.rate=rate;window.setPref=setPref;window.setRegion=setRegion;window.togglePrefGenre=togglePrefGenre;window.resetTaste=resetTaste;window.clearHistory=clearHistory;window.newList=newList;window.add=add;window.notifyPermission=notifyPermission;
 
-render();load();setInterval(check,15*60*1000);
+async function bootGamerGuy(){ try{ render(); await load(); }catch(e){ console.error('GamerGuy boot failed',e); const v=$('#view'); if(v) v.innerHTML=`<section class="hero"><div class="eyebrow">GAMERGUY</div><h1>GamerGuy could not start.</h1><p>${esc(e?.message||e)}</p><div class="actions"><button class="btn primary" onclick="localStorage.clear();location.reload()">Reset GamerGuy</button></div></section>`; } }
+bootGamerGuy(); setInterval(()=>{try{check()}catch(e){console.warn(e)}},15*60*1000);
 </script></body></html>
