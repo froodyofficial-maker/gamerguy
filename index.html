@@ -230,7 +230,21 @@ const S={
   for(const k of ['hideBad','preferSingle','preferIndie','avoidEarly','freeOnly','notifySale','notifyUpdate','autoWatchSale','autoWatchUpdate','useSpecs']) S.prefs[k]=S.prefs[k]===true;
   if(!S.prefs.region) S.prefs.region='IN';
 })();
-const GG_SESSION_ID=localStorage.getItem('ggSessionId')||crypto.randomUUID();localStorage.setItem('ggSessionId',GG_SESSION_ID);
+function makeSessionId(){
+  try{
+    if(window.crypto?.randomUUID) return window.crypto.randomUUID();
+    if(window.crypto?.getRandomValues){
+      const bytes=new Uint8Array(16);
+      window.crypto.getRandomValues(bytes);
+      bytes[6]=(bytes[6]&15)|64;
+      bytes[8]=(bytes[8]&63)|128;
+      const h=[...bytes].map(b=>b.toString(16).padStart(2,'0')).join('');
+      return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;
+    }
+  }catch{}
+  return 'gg-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12);
+}
+const GG_SESSION_ID=localStorage.getItem('ggSessionId')||makeSessionId();localStorage.setItem('ggSessionId',GG_SESSION_ID);
 function save(){
  localStorage.ggViewed=JSON.stringify(S.viewed.slice(-100));
  localStorage.ggWish=JSON.stringify(S.wish);
