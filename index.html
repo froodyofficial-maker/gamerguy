@@ -395,9 +395,29 @@ function priceText(d){
 }
 function ggMatches(a){
   if(S.hidden.has(a.steam_app_id))return false;
-  if(S.q&&!a.name.toLowerCase().includes(S.q.toLowerCase())&&!aliasAppIds(S.q).includes(a.steam_app_id))return false;
-  const gs=ggGenres(a).map(x=>x.toLowerCase());
-  if(S.selectedGenres.length&&!S.selectedGenres.every(g=>gs.includes(g.toLowerCase())))return false;
+
+  const hasQuery=!!S.q;
+  const qMatch=!hasQuery ||
+    a.name.toLowerCase().includes(S.q.toLowerCase()) ||
+    aliasAppIds(S.q).includes(a.steam_app_id);
+
+  // When the user is searching a specific title and has selected genres,
+  // keep the title-search candidates and test their real Steam metadata.
+  // Do NOT make the genre-search pool replace the title-search pool.
+  if(!qMatch)return false;
+
+  if(S.selectedGenres.length){
+    const d=detail(a.steam_app_id);
+    const gs=ggGenres(a).map(x=>x.toLowerCase());
+    const allMatch=S.selectedGenres.every(g=>gs.includes(g.toLowerCase()));
+
+    // If details have not arrived yet, keep the search candidate visible
+    // temporarily instead of making it disappear. The next render after
+    // hydration will apply the real filter.
+    if(!d)return true;
+    if(!allMatch)return false;
+  }
+
   const d=detail(a.steam_app_id);
   if(d){
     if(S.prefs.freeOnly&&!d.is_free)return false;
@@ -406,7 +426,6 @@ function ggMatches(a){
     const rs=reviewStats(d,a.steam_app_id);
     if(S.prefs.hideBad&&rs.positive!==null&&rs.positive<S.prefs.minSteamPositive)return false;
     if(S.prefs.avoidEarly&&d.is_early_access)return false;
-    /* PC specs inform compatibility, but never hide games. */
   }
   return true;
 }
@@ -696,14 +715,28 @@ async function ensureGenres({skipInitialRender=false}={}){
  S.filterBusy=true;
  if(!skipInitialRender)render();
  try{
-   const rows=(await Promise.all(S.selectedGenres.slice(0,5).map(storeSearch))).flat();
+   // Fetch each selected genre, but merge them into the existing title/search pool.
+   // The final all-genre test happens in ggMatches after hydration.
+   const rows=(await Promise.all(S.selectedGenres.slice(0,8).map(storeSearch))).flat();
    const seen=new Set();
+
    for(const a0 of rows){
      if(seen.has(a0.steam_app_id))continue;
      seen.add(a0.steam_app_id);
-     if(!S.map.has(a0.steam_app_id)){S.map.set(a0.steam_app_id,a0);S.apps.push(a0)}
+
+     if(!S.map.has(a0.steam_app_id)){
+       S.map.set(a0.steam_app_id,a0);
+       S.apps.push(a0);
+     }
    }
-   await hydrate([...seen].slice(0,140));
+
+   // Always hydrate the current title-search results too, so their genres are known.
+   const titleIds=S.q
+     ? S.apps.filter(a0=>a0.name.toLowerCase().includes(S.q.toLowerCase())||aliasAppIds(S.q).includes(a0.steam_app_id)).map(a0=>a0.steam_app_id)
+     : [];
+
+   await hydrate([...new Set([...seen,...titleIds])].slice(0,260));
+   S._genreHydrated=true;
  }finally{
    S.filterBusy=false;
    render();
@@ -1018,19 +1051,32 @@ function settings(){
 }
 function discover(){
  const genres=['Horror','Survival Horror','Story Rich','Indie','Action','Adventure','RPG','Co-op','Multiplayer','Single-player','Survival','Strategy','Simulation','Casual'];
- const visible=S.apps.filter(ggMatches);
+ const visible=(S.q
+   ? S.apps.filter(a0=>a0.name.toLowerCase().includes(S.q.toLowerCase())||aliasAppIds(S.q).includes(a0.steam_app_id))
+   : S.apps
+ ).filter(ggMatches);
  const sorted=[...visible].sort((a,b)=>{
    if(S.q){
+     const s=seriesForQuery(S.q);
+     if(s){
+       const ai=s.ids.indexOf(a.steam_app_id),bi=s.ids.indexOf(b.steam_app_id);
+       if(ai!==-1||bi!==-1){
+         if(ai===-1)return 1;
+         if(bi===-1)return -1;
+         return ai-bi;
+       }
+     }
      if(S.prefs.searchSort==='score'){
        const sb=ggScore(b),sa=ggScore(a); if(sb!==sa)return sb-sa;
      }else if(S.prefs.searchSort==='reviews'){
-       return reviewStats(detail(b.steam_app_id),b.steam_app_id).total-reviewStats(detail(a.steam_app_id),a.steam_app_id).total;
+       const rb=reviewStats(detail(b.steam_app_id),b.steam_app_id).total;
+       const ra=reviewStats(detail(a.steam_app_id),a.steam_app_id).total;
+       if(rb!==ra)return rb-ra;
+     }else if(S.prefs.searchSort==='price'){
+       const pa=detail(a.steam_app_id)?.price_overview?.final||999999999;
+       const pb=detail(b.steam_app_id)?.price_overview?.final||999999999;
+       if(pa!==pb)return pa-pb;
      }else{
-       const s=seriesForQuery(S.q);
-       if(s){
-         const ai=s.ids.indexOf(a.steam_app_id),bi=s.ids.indexOf(b.steam_app_id);
-         if(ai!==-1||bi!==-1){if(ai===-1)return 1;if(bi===-1)return -1;if(ai!==bi)return ai-bi;}
-       }
        const rb=searchRank(b.name,S.q),ra=searchRank(a.name,S.q);
        if(rb!==ra)return rb-ra;
      }
@@ -1039,7 +1085,7 @@ function discover(){
    if(sb!==sa)return sb-sa;
    return (b._searchScore||0)-(a._searchScore||0);
  });
- const filtered=sorted.filter(passesSearchReviewFilter);
+const filtered=sorted.filter(passesSearchReviewFilter);
  const top=filtered.slice(0,S.displayCount);
  const hasQuery=!!S.q;
  const title=hasQuery?`Results for “${esc(S.q)}”`:(S.selectedGenres.length?`Matching your filters`:'Discover games');
@@ -1100,7 +1146,7 @@ function closeScreenshot(){
 function focusQ(){$('#q').focus()}
 function clearSearch(){S.q='';$('#q').value='';nav('discover')}
 function clearFilters(){S.selectedGenres=[];S.displayCount=10;save();render()}
-function toggleGenre(g){S.selectedGenres=S.selectedGenres.includes(g)?S.selectedGenres.filter(x=>x!==g):[...S.selectedGenres,g];S.displayCount=10;save();render();ensureGenres()}
+async function toggleGenre(g){S.selectedGenres=S.selectedGenres.includes(g)?S.selectedGenres.filter(x=>x!==g):[...S.selectedGenres,g];S.displayCount=10;save();await ensureGenres({skipInitialRender:false})}
 function wish(id){
  const add=!S.wish.includes(id);
  if(add){S.wish=[...S.wish,id];if(S.prefs.autoWatchSale||S.prefs.autoWatchUpdate)S.watch[id]={sale:null,update:S.prefs.autoWatchUpdate,lastNews:null};toast('Added to wishlist')}
