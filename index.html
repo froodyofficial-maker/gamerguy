@@ -961,12 +961,14 @@ async function loadGame(id){
  }
 }
 function steamLoginUrl(){
- const returnTo=`${EDGE}?action=steam_callback`;
+ // Keep the OpenID return URL on GamerGuy's own domain so Steam accepts the realm.
+ // The page then forwards the signed OpenID response to the Supabase verifier.
+ const returnTo=`${location.origin}/?steam_callback=1`;
  const p=new URLSearchParams({
    'openid.ns':'http://specs.openid.net/auth/2.0',
    'openid.mode':'checkid_setup',
    'openid.return_to':returnTo,
-   'openid.realm':'https://gamerguy.online/',
+   'openid.realm':`${location.origin}/`,
    'openid.identity':'http://specs.openid.net/auth/2.0/identifier_select',
    'openid.claimed_id':'http://specs.openid.net/auth/2.0/identifier_select'
  });
@@ -1002,6 +1004,37 @@ async function handleSteamLink(){
  try{ await loadSteamAccount(id,true); toast(`Steam linked: ${S.steam?.personaname||'account'}`); }
  catch(e){toast(e.message||'Could not link Steam account')}
  if(S.page==='profile'||S.page==='home')render();
+}
+async function handleSteamOpenIdCallback(){
+ const url=new URL(location.href);
+ if(url.searchParams.get('steam_callback')!=='1')return false;
+ const mode=url.searchParams.get('openid.mode');
+ if(!mode)return false;
+ const params=Object.fromEntries(url.searchParams.entries());
+ // Remove the callback parameters from the address bar before doing network work.
+ history.replaceState(null,'',`${url.origin}${url.pathname}${url.hash||'#profile'}`);
+ try{
+   if(mode==='cancel'){ toast('Steam sign-in was cancelled.'); return true; }
+   const d=await edge('steam_verify',{openid:params});
+   S.steam=d.profile||null;
+   S.steamLibrary=Array.isArray(d.games)?d.games:[];
+   S.owned=new Set(S.steamLibrary.map(g=>Number(g.appid)).filter(Boolean));
+   S.steamTaste={};
+   S.steamLibrary.slice(0,60).forEach(g=>{
+     S.steamTaste[String(g.appid)]={hours:Number(g.playtime_forever||0)/60,lastPlayed:Number(g.rtime_last_played||0)};
+   });
+   S.recs=[];
+   save();
+   S.page='profile';
+   render();
+   toast(`Steam linked: ${S.steam?.personaname||'account'} · ${S.steamLibrary.length} games`);
+   return true;
+ }catch(e){
+   S.page='profile';
+   render();
+   toast(e.message||'Could not verify your Steam account');
+   return true;
+ }
 }
 function steamHours(g){const h=Number(g?.playtime_forever||0)/60;return h>=1000?`${Math.round(h).toLocaleString()} h`:h>=10?`${h.toFixed(1)} h`:`${Math.round(h*60)} min`}
 function steamGameImage(g){
@@ -1689,7 +1722,7 @@ async function bootGamerGuy(){
  catch(e){ console.error('Steam catalog load failed',e); const st=$('#status'); if(st) st.textContent='Steam temporarily unavailable'; toast('Steam is temporarily unavailable. You can still use saved games and settings.'); }
 }
 
-bootGamerGuy().then(async()=>{try{await handleSteamLink()}catch(e){console.warn(e)} try{await refreshRecommendations()}catch(e){console.warn(e)} if(location.hash.startsWith('#game-'))routeHash()}); setInterval(()=>{try{check()}catch(e){console.warn(e)}},15*60*1000);
+bootGamerGuy().then(async()=>{try{const handled=await handleSteamOpenIdCallback();if(!handled)await handleSteamLink()}catch(e){console.warn(e)} try{await refreshRecommendations()}catch(e){console.warn(e)} if(location.hash.startsWith('#game-'))routeHash()}); setInterval(()=>{try{check()}catch(e){console.warn(e)}},15*60*1000);
 function preloadImages(ids){
   for(const id of ids){
     const d=detail(id);
@@ -1706,3 +1739,4 @@ function preloadImages(ids){
   <img id="screenModalImage" alt="">
 </div>
 </body></html>
+
