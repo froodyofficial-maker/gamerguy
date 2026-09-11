@@ -963,7 +963,7 @@ async function loadGame(id){
 function steamLoginUrl(){
  // Keep the OpenID return URL on GamerGuy's own domain so Steam accepts the realm.
  // The page then forwards the signed OpenID response to the Supabase verifier.
- const returnTo=`${location.origin}/?steam_callback=1`;
+ const returnTo='https://gamerguy.online/?steam_callback=1';
  const p=new URLSearchParams({
    'openid.ns':'http://specs.openid.net/auth/2.0',
    'openid.mode':'checkid_setup',
